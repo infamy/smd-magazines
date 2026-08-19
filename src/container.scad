@@ -425,6 +425,493 @@ module lid_pocket(wall=1.2, width=8)
  */
 lever_web_scale = 1.0;
 
+/* Lever hinge thickness.
+ *
+ * The lever is a full-depth flap: the slot beside it is cut through every
+ * profile, so above the first-layer skin there is nothing joining it to the
+ * body. The hinge is that skin - a 9.9mm wide bridge running 61.9mm in y
+ * (x -29.95..-20.05, y -28.0..33.9, 332.7mm2), material at z=0.5 and open at
+ * z=2.0. Everything the lever's stiffness depends on is its thickness.
+ *
+ * Growing the body lengthens that bridge without thickening it, and a hinge's
+ * stiffness goes as t^3, so the XL is softer for the same push and the extra
+ * leverage of the longer arm makes it softer again. This raises the bridge -
+ * and only the bridge - so the standard part is untouched at the default.
+ *
+ *   side_wall_thickness (1.25)  stock
+ *   2.5                         XL, twice the skin -> ~8x the hinge stiffness
+ */
+lever_hinge_h = side_wall_thickness;
+
+/* The web carrying the back clip. Measured off an XL section at z=1.9: three
+ * solid runs sit in that corner and the middle one is a constant 1.49mm strip
+ * at x -43.4..-41.9 (XL) running y 25.2 until it merges into the wall near
+ * y 31. In standard coordinates - which is what these are, gp() moves them -
+ * that is x -30.90..-29.42, y 12.65..18.50.
+ *
+ * It has 2.07mm of clearance outboard and 0.58mm inboard, so it can only be
+ * thickened outboard. lever_web_add is how much to add there; the XL wants
+ * some because the same 1.49mm web carries a longer arm.
+ *
+ *   0     stock
+ *   0.8   XL, 1.49 -> 2.29mm, still 1.27mm clear of the wall
+ */
+/* The web that carries the back clip: a constant 1.49mm strip at
+ * x -30.90..-29.42 (standard coords; gp() moves them), running the height of
+ * lever_web_lo/hi. It has 2.07mm clear outboard and only 0.58mm inboard, so it
+ * can only grow outboard.
+ *
+ * lever_web_add is added as a CONSTANT thickness, parallel to the web's own
+ * face, over the web's whole run - deliberately including both ends, so it
+ * merges into the clip below and into the body above. No taper and no fade:
+ * a section that thins back down would just move the weak point rather than
+ * remove it. Where the slot is already narrower than lever_web_add the two
+ * simply join, which is the intent.
+ *
+ *   0    off - stock geometry
+ *   1.0  XL, web 1.49 -> 2.49mm solid from clip to body
+ */
+/* Root fillet radius for the clip arm, and the two joints to apply it at,
+ * in standard coordinates (gp() moves them to the grown position).
+ *   0    off - stock geometry
+ *   1.2  XL
+ */
+/* ------------------------------------------------------------------
+ * Clip-arm tip reinforcement.
+ *
+ * WHICH END IS ANCHORED. Section the body at z = 1.9 and sweep a horizontal
+ * line: the leftmost solid run - the clip arm - is continuous from y -44.6 all
+ * the way to y +40.1 in XL coordinates, 85mm of strip, and the release slot
+ * beside it never closes (0.75mm below, 1.8..3.4mm above). Its only full-depth
+ * tie to the body is the 1.48mm web at x -30.90..-29.42, y 12.65..18.50 in
+ * STANDARD coordinates - the "Y" in the section. (Below z = 1.25 the first
+ * layer skins over the slot; that skin is the flexure, the web is the tie.)
+ *
+ * So the ROOT is that web, and BOTH ends are free: the hook at std y -32 and
+ * the release tab at std y +27.6. The tab is therefore a short cantilever
+ * hanging off the root and pointing up, and it already tapers the right way -
+ * 5.82mm at the root, 2.51mm at the tip. What is wrong is not the direction of
+ * the taper but the floor: 2.51mm of PLA at the end of the lever fingers push
+ * on is where it cracks.
+ *
+ * THE FIX. Keep the taper direction, raise the whole thing above a 4mm floor,
+ * and never let it taper back down. The new inner face is one straight line
+ * from the arm's own inner face AT the root (arm_tip_root, where the addition
+ * has zero width, so there is no step) to the tab top (arm_tip_tip). The
+ * material between that line and the existing face is the arm's own outline
+ * smeared inboard - a Minkowski sum with a horizontal segment - so the new
+ * face inherits the arm's shape and cannot be a pasted box or a detached blob.
+ *
+ * It goes INSIDE body()'s first difference, so 2d_shoulder_cut trims its top
+ * flush with the tab and the two relief cones chamfer its outer edge exactly
+ * as they chamfer the arm's.
+ *
+ * Only the INNER face may move. The outer face is the rail interface, and
+ * below the root the release slot is only 0.75mm wide, so the long lower arm
+ * cannot be thickened inboard at all - it is a constant 4.01mm there, already
+ * above the floor.
+ *
+ * Measured, XL, z = 1.9, tab section: 2.508 -> 4.044mm minimum, monotone
+ * 5.82 at the root to 4.04 at the tip, no adjacent-0.5mm step over 0.21mm.
+ * Slot beside the tab 2.65 -> 1.12mm, still open. Body 31.887 -> 32.011cm3.
+ *
+ * OFF by default, so the standard body is bit-for-bit stock; build.sh turns it
+ * on for the XL variants with -D arm_tip_fill=1.
+ * ------------------------------------------------------------------ */
+arm_tip_fill  = 0;                // 0 = stock tapered tab, 1 = reinforced
+arm_tip_root  = [-31.25, 19.00];  // inner face at the web root - zero addition
+arm_tip_tip   = [-33.00, 27.60];  // inner face at the tab top (profile_top - drop)
+arm_tip_ytop  = 31.00;            // run the line past the tab; shoulder_cut trims
+arm_tip_reach = 2.20;             // how far inboard the arm may be smeared
+
+function arm_tip_x(y) = arm_tip_root[0] +
+    (y - arm_tip_root[1]) * (arm_tip_tip[0] - arm_tip_root[0])
+                          / (arm_tip_tip[1] - arm_tip_root[1]);
+
+module 2d_arm_tip_fill()
+{
+    y0 = arm_tip_root[1];
+    y1 = arm_tip_ytop;
+    intersection() {
+        minkowski() {
+            intersection() {
+                p_right();
+                polygon([gp([-60, y0]), gp([-30, y0]), gp([-30, y1]), gp([-60, y1])]);
+            }
+            square([arm_tip_reach, 0.001]);
+        }
+        polygon([gp([-60, y0]),
+                 gp([arm_tip_x(y0), y0]),
+                 gp([arm_tip_x(y1), y1]),
+                 gp([-60, y1])]);
+    }
+}
+
+/* ------------------------------------------------------------------
+ * Back-wall stiffening.
+ *
+ * WHICH WALL. "Back" is this file's own word for the -x edge - the edge the
+ * rail clip lives on ("the web carrying the back clip", above). Section the XL
+ * body at z=1.9 and the four walls of the shell measure:
+ *
+ *     back  (-x)   1.499mm   over y -17.5 .. +17.5   (35mm at <=1.51)
+ *     front (+x)   1.499mm   over y -12.5 .. +12.5   (25mm, and the slider
+ *                                                     channel buttresses it)
+ *     top   (+y)   1.452mm   but the top edge is 5.7mm deep with the label
+ *                            slot cut through it - a box section, not a panel
+ *     foot  (-y)   2.507mm   over x -12.5 .. +12.5, and it sits ON the rail
+ *
+ * So the back wall is both the thinnest AND the one carrying the clip: the
+ * magazine's whole weight goes rail hook -> clip arm -> the 1.48mm web at
+ * y 25..31 -> this wall, and pressing the release tab drives the same web
+ * against it. 1.5mm of PLA over a 35mm span is what flexes.
+ *
+ * WHAT CAN BE ADDED. Nothing outboard - that face is the release slot, 0.75mm
+ * wide, and beyond it the arm, which is the rail interface and the 100mm
+ * envelope. Inboard is the tape pocket, so the addition is bounded by the reel
+ * and by nothing else. The pocket VOID is not a circle: growth splits the
+ * profile's r30 pocket and pushes the halves apart, so at XL it is a 25 x 25
+ * square dilated by r30 - half-width 42.5 on the axes but 47.7 out on the
+ * diagonals. The reel is round. Everything in that shape outside r42 (the
+ * pocket radius this file documents: 29.5 + 12.5 of growth) is dead space.
+ *
+ * THE LINER. A constant-thickness band on the inside of the pocket, built from
+ * the pocket's own circle through the same grow() the pocket goes through, so
+ * it tracks the pocket face exactly instead of being a pasted-on rectangle;
+ * back_wall_bite sinks its outer edge into the existing wall so the two merge
+ * rather than meeting on a coincident face. Then:
+ *
+ *   - circle(back_wall_keep_r()) is subtracted, so the r42 reel is untouched.
+ *     That is what pinches the liner to 0.5mm at the wall's mid-span: there is
+ *     genuinely no more room there.
+ *   - a window trims it to the back wall, and the window's edge ramps from the
+ *     liner's inner face at |y| = back_wall_y_full out to the pocket face at
+ *     back_wall_y_end, so the liner ENDS AT ZERO THICKNESS in the corners
+ *     instead of stopping on a square shoulder.
+ *
+ * Both circles and the window go through grow(), so the y=0 seam smears all
+ * three the same way and they stay registered. Writing the window's vertices
+ * through gp() instead would tear it open across the seam.
+ *
+ * Everything is in STANDARD coordinates.
+ *
+ *   0     off - stock geometry
+ *   1.6   XL: back wall 1.499 -> 3.099mm on the flanks, 1.999mm at mid-span
+ * ------------------------------------------------------------------ */
+back_wall_add      = 0;      // new material added inboard, mm. 0 = stock
+back_wall_bite     = 0.6;    // how far the liner reaches INTO the existing wall
+back_wall_pocket_r = 30.0;   // the ungrown profile's tape pocket, measured
+back_wall_keep_r0  = 29.7;   // reel radius that must stay clear, ungrown
+back_wall_y_full   = 8.0;    // full thickness out to this |y|
+back_wall_y_end    = 16.0;   // ...ramped back to zero thickness by here
+
+// the reel circle, at true size in the grown frame: 29.5 + 12.5 = the r42 the
+// header quotes for the XL. A circle, because a coil of tape is one.
+function back_wall_keep_r() = back_wall_keep_r0 + grow_x;
+
+function bw_out(y) = -sqrt(max(0.01, pow(back_wall_pocket_r + back_wall_bite, 2) - y*y));
+function bw_in(y)  = -sqrt(max(0.01, pow(back_wall_pocket_r - back_wall_add,  2) - y*y));
+
+// the window's right edge: at the liner's inner face while the wall is thin,
+// ramped back out to the pocket face over y_full..y_end
+function bw_edge(y) =
+    let (a  = abs(y),
+         t  = a <= back_wall_y_full ? 0
+            : a >= back_wall_y_end  ? 1
+            : (a - back_wall_y_full) / (back_wall_y_end - back_wall_y_full))
+    bw_in(y) + (bw_out(y) - bw_in(y)) * t;
+
+module 2d_back_wall_window(n = 64)
+{
+    y1 = back_wall_y_end;
+    polygon(concat(
+        [ for (i = [0:n]) let (y = -y1 + 2*y1*i/n) [bw_edge(y), y] ],
+        [ [-60, y1], [-60, -y1] ]));
+}
+
+module 2d_back_wall_fill()
+{
+    difference() {
+        intersection() {
+            difference() {
+                grow() circle(r = back_wall_pocket_r + back_wall_bite, $fn = 240);
+                grow() circle(r = back_wall_pocket_r - back_wall_add,  $fn = 240);
+            }
+            grow() 2d_back_wall_window();
+        }
+        /* CIRCUMSCRIBED, not inscribed. circle() draws the polygon INSIDE the
+         * radius asked for, so a plain circle(42) leaves its flats 1.6um in
+         * from r42 and the reel envelope is breached by that much. Dividing by
+         * cos(half the facet angle) puts the flats exactly on r42 instead. */
+        circle(r = back_wall_keep_r() / cos(180 / 360), $fn = 360);
+    }
+}
+
+/* ------------------------------------------------------------------
+ * Carrying the tip reinforcement DOWN into the body.
+ *
+ * WHAT THE SECTION ACTUALLY SHOWS. Cut body(12) at z = 1.9 and sweep a
+ * horizontal line across the clip corner. In STANDARD coordinates the arm's
+ * inner face, the release slot and the body's left wall behave like this:
+ *
+ *   y  <= 1.5    arm | 0.75 slot | 1.50 wall            wall = pocket boundary
+ *   y  1.5..12.3 arm |  slot opens to 2.77 | wall       still one wall
+ *   y  12.33     the wall FORKS
+ *   y  12.4..18.9  arm | 2.1..0.34 slot | 1.481 WEB | 0.33..3.08 | body
+ *   y  18.89     the web merges into the arm - THE ROOT
+ *   y  >= 18.9   arm+web as one 5.8mm mass | 3.08..1.14 tab travel | body
+ *
+ * So the tie is a "Y": below y 12.33 there is ONE 1.5mm left wall; at 12.33 it
+ * forks into a 1.481mm WEB that leans outboard and lands on the arm at y 18.89,
+ * and the body wall that carries on inboard. Every millimetre of load the
+ * release tab sees goes tab -> arm -> root -> that 1.481mm web -> fork -> body.
+ * Once arm_tip_fill has taken the tab off its 2.51mm floor, the web is the
+ * thinnest thing left in the load path, and the moment there is LARGER than at
+ * the root because the lever arm is longer.
+ *
+ * WHERE THERE IS ROOM. Measured at z = 1.9, over the web's run:
+ *
+ *   y      slot arm|web     gap web|body
+ *   12.4      2.139            0.327
+ *   14.0      1.700            1.647
+ *   16.0      1.151            2.898
+ *   18.0      0.602            3.064
+ *   18.8      0.336            3.076
+ *
+ * The arm|web slot is the release slot's top end - the arm has to be able to
+ * move, so nothing goes there. The web|body gap is a dead pocket, closed at the
+ * bottom by the fork and bounded on both sides by body material. That is the
+ * only room, and it is on the web's INBOARD face.
+ *
+ * WHY THAT IS THE CONTINUATION AND NOT A NEW FEATURE. At the root the inner
+ * face of the reinforced section IS the web's inner face carried on: measured,
+ * the reinforced face at std y 19.0 sits at x -31.62 and the web's inner face
+ * extrapolated to y 19.0 sits at -31.586, 0.03mm apart, and arm_tip_root's own
+ * x is -31.70. The two faces are collinear across the root to within 0.1mm.
+ * Thickening the web inboard therefore continues the same surface downward -
+ * it is not a blob stuck on the side of the slot.
+ *
+ * THE SHAPE. One straight line, hinged where the addition is already zero:
+ * from the web's inner face AT the root (no step, exactly as arm_tip_fill
+ * hinges on arm_tip_root) down to that face plus arm_root_carry at the fork.
+ * The material between that line and the web is the web's own outline smeared
+ * inboard - a Minkowski sum with a horizontal segment - so the new face is the
+ * real web face translated, not a drawn quadrilateral. The smear is sourced
+ * from a strip that starts arm_carry_bite INSIDE the web, so the construction
+ * can never reach across the release slot even if the fitted face drifts.
+ *
+ * Nothing is added at the fork itself: there the wedge is buried inside the
+ * merged wall, so the addition fades out into solid material instead of ending
+ * on a face. Near y 12.4..13.5 it bridges the 0.33..1.3mm web|body gap, which
+ * is what "into the main body" means here - the web lands on the body over a
+ * broader run instead of on a corner.
+ *
+ *   0     off - stock geometry, and the standard body is bit-for-bit stock
+ *   1.5   XL. Web 1.481 -> 2.98mm at the fork, tapering to 1.481 at the root.
+ *
+ * CEILING. The taper line must stay outboard of the tape pocket. The pocket
+ * face is at std x -27.32 at the fork, the web's inner face at -29.31, so the
+ * line runs out of room at 1.99mm; arm_carry_max keeps a margin on that.
+ * ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------
+ * Weld the clip arm to the web.
+ *
+ * The arm and the web are two separate springs with a void between them.
+ * Everything added so far - the tab, the web root, the back wall - put
+ * material either SIDE of that void and left the gap itself open, so the two
+ * kept acting independently. Closing it makes them one member, which is a step
+ * change in stiffness rather than a percentage.
+ *
+ * Measured at XL, z=1.9: the void is 2.71mm at y 22 and closes on its own by
+ * y 31.5. Both its edges are straight, so the fill is the strip between them.
+ * It tapers to a point at the bottom rather than stopping square.
+ *
+ * BELOW the taper the void keeps widening and is the lever's travel - filling
+ * there would lock the clip shut, so weld_y0 must stay above it.
+ *
+ *   0  off - stock
+ *   1  on, XL
+ * ------------------------------------------------------------------ */
+weld_arm_web = 0;
+weld_y0      =  7.2;    // arm side starts here, standard coords (XL y 19.7)
+weld_y0_web  = 10.4;    // web side starts higher, so the bottom is a taper
+weld_y1      = 19.1;    // top, where the two merge anyway (XL y 31.6)
+function weld_arm_x(y) = -32.76 - 0.0700 * (y - 9.5);   // arm's inner face
+function weld_web_x(y) = -29.60 - 0.3189 * (y - 9.5);   // web's outer face
+
+module 2d_weld_arm_web() {
+    difference() {
+        /* The bottom edge runs diagonally - the arm side starts lower than the
+         * web side - so the fill tapers in rather than beginning square. */
+        polygon([gp([weld_arm_x(weld_y0),      weld_y0]),
+                 gp([weld_arm_x(weld_y1),      weld_y1]),
+                 gp([weld_web_x(weld_y1),      weld_y1]),
+                 gp([weld_web_x(weld_y0_web),  weld_y0_web])]);
+        p_right();                      // only fills void, never overlaps
+    }
+}
+
+arm_root_carry  = 0;        // 0 = off; inboard thickness added at the fork
+arm_carry_lo    = 12.30;    // std y, just below the fork - addition is buried
+arm_carry_hi    = 20.10;    // std y, the root - addition is zero
+arm_carry_face  = [-29.554, 13.00];  // a measured point on the web's INNER face
+arm_carry_slope = -0.34446;          // dx/dy of that face (fitted y 13.0..18.6)
+arm_carry_bite  = 0.60;     // how far inside the web the smear is sourced from
+arm_carry_in    = -20.00;   // std x, inboard limit of the source band (pocket)
+arm_carry_max   = 1.80;     // beyond this the taper line reaches the pocket
+
+// the web's inboard face, in standard coordinates
+function arm_carry_web(y) =
+    arm_carry_face[0] + (y - arm_carry_face[1]) * arm_carry_slope;
+
+/* The addition's inner face: the web's own face at the root, that face plus
+ * arm_root_carry at the fork. The guard lives HERE and not at the top level
+ * because `use <>` does not run a file's top-level statements - a top-level
+ * assert in this file is never evaluated by magazine_plate.scad. In the
+ * expression it is checked every time the shape is actually built. */
+function arm_carry_x(y) =
+    let (x1 = arm_carry_web(arm_carry_hi),
+         x0 = arm_carry_web(arm_carry_lo) + arm_root_carry)
+    assert(arm_root_carry <= arm_carry_max,
+           str("arm_root_carry=", arm_root_carry, " puts the taper line into ",
+               "the tape pocket; the measured ceiling is ", arm_carry_max))
+    x1 + (y - arm_carry_hi) * (x0 - x1) / (arm_carry_lo - arm_carry_hi);
+
+module 2d_arm_root_carry()
+{
+    y0 = arm_carry_lo;
+    y1 = arm_carry_hi;
+    intersection() {
+        minkowski() {
+            intersection() {
+                p_right();
+                // sourced from inside the web, so the smear cannot reach the
+                // release slot; runs inboard into the pocket, which is empty
+                polygon([gp([arm_carry_web(y0) - arm_carry_bite, y0]),
+                         gp([arm_carry_in, y0]),
+                         gp([arm_carry_in, y1]),
+                         gp([arm_carry_web(y1) - arm_carry_bite, y1])]);
+            }
+            square([arm_root_carry, 0.001]);
+        }
+        polygon([gp([-60, y0]),
+                 gp([arm_carry_x(y0), y0]),
+                 gp([arm_carry_x(y1), y1]),
+                 gp([-60, y1])]);
+    }
+}
+
+/* ------------------------------------------------------------------
+ * ROOT BLEND - the fork's inner surface written as ONE curve.
+ *
+ * WHAT IS WRONG. Section the XL body at z=1.9 and follow the pocket-facing
+ * face of the arm+web member upward. Two separate reinforcements own that
+ * face and they own it over abutting, not overlapping, spans:
+ *
+ *   below std y 19.00   2d_arm_root_carry, face arm_carry_x(y), dx/dy -0.5368
+ *   above std y 19.00   2d_arm_tip_fill,   face arm_tip_x(y),   dx/dy -0.2035
+ *
+ * 2d_arm_tip_fill's polygon is clipped at arm_tip_root[1] = 19.00 and the tip
+ * face is 0.1592mm INBOARD of the carry face there, so the union hands the
+ * surface over across a bare horizontal segment:
+ *
+ *   std  (-31.4092, 19.00) -> (-31.2500, 19.00)      XL  (-43.9092, 31.50) -> (-43.7500, 31.50)
+ *
+ * That segment is the defect. It is a square, re-entrant step in the middle of
+ * a working face - a stress raiser and a print artefact - and it is exactly
+ * what the owner ringed at XL (-43.69, 31.40), std (-31.19, 18.90).
+ *
+ * WHY A CLOSING CANNOT FIX IT. offset(r=R) offset(r=-R) fills a concave corner
+ * only where two faces lie within R of each other. Here the handover is a step
+ * between two nearly parallel lines; extended, they do meet, at std
+ * (-31.1528, 18.5223) - but that crossing is 0.48mm BELOW the step, so between
+ * 18.52 and 19.00 the tip face is the more inboard of the two and simply is not
+ * drawn. There is no corner at 19.00 for a closing to find.
+ *
+ * THE SHAPE. Take the two faces as what they are - two straight lines - and
+ * write the surface between them as one curve instead of two segments and a
+ * jog. The curve is a quintic Bezier whose first three control points lie on
+ * the LOWER line and whose last three lie on the UPPER line, so:
+ *
+ *   - it leaves the lower face at std y = root_blend_lo with that face's
+ *     position, slope AND curvature (three collinear control points give zero
+ *     end curvature), and rejoins the upper face at root_blend_hi the same
+ *     way. G2 at both ends: no crease, no square cut-off, no fade to a taper.
+ *   - a Bezier lies inside the convex hull of its control points, and here
+ *     that hull is bounded outboard by the two lines themselves. So the curve
+ *     is >= max(lower, upper) at every y: the blend can only ADD material,
+ *     never cut, and it cannot wander off the two faces it is joining.
+ *   - it is monotone in y, so the ribbon below is simple and cannot fold.
+ *
+ * The area unioned in is that curve and the same curve pushed root_blend_bite
+ * outboard, i.e. a ribbon lying ALONG the new surface. Its two ends are
+ * horizontal segments buried inside the member (the member is 1.8mm thick
+ * there and the bite is 0.6mm), so nothing square ever reaches a face, and the
+ * ribbon overlaps existing material along its whole length - it cannot detach.
+ *
+ * WHAT IT DOES NOT TOUCH. The release slot outboard of the arm is 2.3mm away
+ * at its nearest, the body wall inboard is 2.4mm away, and the whole blend
+ * lives at std y 17.6..20.0 - clear of the lever travel below std y 11.5. The
+ * outer face of the part is not referenced at all.
+ *
+ * Measured, XL, z = 1.9: the member's inner edge steps +0.1592mm at y 31.50
+ * before and is monotone to 1e-4 after. Body 32.07249 -> 32.07367cm3.
+ *
+ *   0  off - stock geometry, and the standard body is bit-for-bit stock
+ *   1  on. Only meaningful with arm_tip_fill and arm_root_carry, which are
+ *      what put the two faces there; asserted below.
+ * ------------------------------------------------------------------ */
+root_blend      = 0;        // 0 = off, 1 = blend the two faces into one curve
+root_blend_lo   = 17.60;    // std y where the curve leaves the lower face
+root_blend_hi   = 20.00;    // std y where the curve rejoins the upper face
+root_blend_s1   = 0.40;     // control points 2 and 5, as a fraction of the way
+root_blend_s2   = 0.80;     // control points 3 and 4, ... from the end to the corner
+root_blend_bite = 0.60;     // ribbon thickness, sunk into the member
+root_blend_n    = 96;       // curve samples
+
+// The two faces, taken from the very functions that draw them, so the blend
+// tracks arm_root_carry and the tab line instead of restating them.
+function rb_lo(y) = arm_carry_x(y);
+function rb_hi(y) = arm_tip_x(y);
+
+/* Where the two lines cross, in standard coordinates. Sampled from the two
+ * functions at y = 0 and 1 rather than restated, so it follows them. */
+function rb_corner() =
+    assert(arm_root_carry > 0 && arm_tip_fill,
+           "root_blend joins the arm_tip_fill and arm_root_carry faces; with either off there is nothing to join")
+    let (a0 = rb_lo(0), a1 = rb_lo(1) - a0,
+         b0 = rb_hi(0), b1 = rb_hi(1) - b0,
+         y  = (b0 - a0) / (a1 - b1))
+    [a0 + a1 * y, y];
+
+function rb_ctrl() =
+    let (c  = rb_corner(),
+         p0 = [rb_lo(root_blend_lo), root_blend_lo],
+         p5 = [rb_hi(root_blend_hi), root_blend_hi],
+         s1 = root_blend_s1, s2 = root_blend_s2)
+    [ p0,
+      p0 + s1 * (c - p0),
+      p0 + s2 * (c - p0),
+      p5 + s2 * (c - p5),
+      p5 + s1 * (c - p5),
+      p5 ];
+
+// quintic Bezier, Bernstein form
+function rb_at(t) =
+    let (p = rb_ctrl(), u = 1 - t)
+        pow(u,5)          * p[0] +  5*pow(u,4)*t     * p[1]
+    + 10*pow(u,3)*t*t     * p[2] + 10*u*u*pow(t,3)   * p[3]
+    +  5*u*pow(t,4)       * p[4] +    pow(t,5)       * p[5];
+
+module 2d_root_blend()
+{
+    n   = root_blend_n;
+    pts = [for (i = [0:n]) rb_at(i/n)];
+    polygon(concat(
+        [for (p = pts)      gp(p)],
+        [for (i = [n:-1:0]) gp([pts[i][0] - root_blend_bite, pts[i][1]])]));
+}
+
 function lever_web0(width, slot)     = (width - slot) / 2;   // nominal, unscaled
 function lever_web(width, slot)      = lever_web0(width, slot) * lever_web_scale;
 function lever_slot_eff(width, slot) =
@@ -506,7 +993,58 @@ module body(width = 8,
     union() {
     difference()
     {
-        body_base(side_wall_thickness, spaced_width, spaced_width - 2);
+        union() {
+            body_base(side_wall_thickness, spaced_width, spaced_width - 2);
+
+            if (weld_arm_web)
+                linear_extrude(2 * side_wall_thickness + spaced_width)
+                    2d_weld_arm_web();
+
+            /* Clip-arm tip reinforcement. Inside this difference on purpose:
+             * 2d_shoulder_cut trims its top flush with the tab, and the two
+             * relief cones chamfer its outer edge as they do the arm's. */
+            if (arm_tip_fill)
+                difference() {
+                    linear_extrude(2 * side_wall_thickness + spaced_width)
+                        2d_arm_tip_fill();
+                    lid_pocket(side_wall_thickness, spaced_width);
+                }
+
+            /* The same reinforcement carried down past the root: thickens the
+             * web that ties the arm to the body, on its inboard face, and
+             * merges into the body wall where the web lands. */
+            if (arm_root_carry > 0)
+                difference() {
+                    linear_extrude(2 * side_wall_thickness + spaced_width)
+                        2d_arm_root_carry();
+                    lid_pocket(side_wall_thickness, spaced_width);
+                }
+
+            /* The fork's inner face, rewritten as one curve: joins the
+             * arm_root_carry face below to the arm_tip_fill face above with a
+             * G2 blend, so the member's inner surface runs through the root
+             * without the 0.16mm square step the two used to hand over across.
+             * Same place in the tree as the two faces it joins, so every cut
+             * body() makes applies to it too. */
+            if (root_blend > 0)
+                difference() {
+                    linear_extrude(2 * side_wall_thickness + spaced_width)
+                        2d_root_blend();
+                    lid_pocket(side_wall_thickness, spaced_width);
+                }
+
+            /* Back-wall stiffening liner. Same shape of construction as the
+             * arm tip fill and for the same reason: inside this difference so
+             * every cut body() makes still applies to it, and clipped by the
+             * lid pocket so the lid still seats. */
+            if (back_wall_add > 0)
+                difference() {
+                    linear_extrude(2 * side_wall_thickness + spaced_width)
+                        2d_back_wall_fill();
+                    lid_pocket(side_wall_thickness, spaced_width);
+                }
+        }
+
 
         // lower the lever's tab so the lip can overhang it
         if (sh)
@@ -564,6 +1102,32 @@ module body(width = 8,
         translate([sp([slider_pos,10.5]).x, sp([slider_pos,10.5]).y, 0]) cylinder(h=side_wall_thickness + 1,d=1.9);
     }
 
+        /* Thicken the lever hinge, if asked. Same 2D outline the first layer
+         * already uses, extruded taller and clipped to the bridge, so it adds
+         * meat under the lever and nowhere else. Sits inside the union so the
+         * window, label slot and badge still cut it. No-op at the default. */
+        if (lever_hinge_h > side_wall_thickness)
+            linear_extrude(lever_hinge_h) intersection() {
+                /* Exactly the material the first layer has and the layers above
+                 * do not - i.e. the bridge across the slot, and nothing else.
+                 * Derived from the profiles, so it cannot creep into the tape
+                 * pocket the way a hand-picked bounding box did. */
+                difference() {
+                    union() { p_right(); p_mid_noslot(); }
+                    p_mid_slot();
+                }
+                translate([-200, -200]) square([200 + lever_hinge_side, 400]);
+            }
+
+
+        /* Thicken the back-clip web, outboard only.
+         *
+         * NOT a pasted rectangle - that squared off a tapered web and overhung
+         * the slot. Instead take the profile itself, shift it lever_web_add
+         * outboard, and keep only what that covers of the empty slot beside the
+         * web. The new face is the web's own face moved over, so it inherits
+         * the taper and the fillets exactly, and it can never overlap material
+         * that is already there. The box only bounds WHERE this applies. */
     }
 
         // cut them at true shape; the profile no longer carries them at all
