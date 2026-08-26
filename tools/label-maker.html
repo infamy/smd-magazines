@@ -298,6 +298,12 @@ footer.note code{font-family:"IBM Plex Mono",monospace; font-size:12px;
       </div>
       <div class="pbody">
         <div class="grid">
+          <div class="opt"><label for="size">Magazine</label>
+            <select id="size">
+              <option value="auto">Auto &mdash; leans XL</option>
+              <option value="standard">Standard</option>
+              <option value="xl">XL</option>
+            </select></div>
           <div class="opt"><label for="tape">Tape width</label>
             <select id="tape">
               <option value="8">8 mm</option><option value="12">12 mm</option>
@@ -313,11 +319,6 @@ footer.note code{font-family:"IBM Plex Mono",monospace; font-size:12px;
               <option value="1.5">Embossed 1.5 mm</option>
               <option value="2.2">Embossed 2.2 mm</option>
               <option value="3.0">Embossed 3.0 mm</option></select></div>
-          <div class="opt"><label for="size">Magazine</label>
-            <select id="size">
-              <option value="auto">Auto</option>
-              <option value="standard">Standard</option>
-              <option value="xl">XL</option></select></div>
           <div class="opt"><label for="nozzle">Nozzle</label>
             <select id="nozzle">
               <option value="0.4" selected>0.4 mm</option>
@@ -1750,12 +1751,21 @@ function recommend(){
   const capStd = capacityOf(R_STD, carrier, pitch);
   const capXL  = capacityOf(R_XL,  carrier, pitch);
 
+  /* Capacity is an estimate whose most sensitive term - carrier thickness - is
+     a dropdown, not a measurement, so resting a borderline call on it is false
+     precision. Standard has to be a clear win: the reel fits inside three
+     quarters of it. Anything tighter than that, or a reel that does not say
+     how much is on it, goes XL, which is the cheap mistake - a half-empty XL
+     costs some filament, a standard that turns out too small costs a reprint
+     and a reel split across two magazines. */
+  const ROOMY = 0.75;
   let size = el.size.value, why;
   if(size === "auto"){
-    if(!isFinite(qty) || qty <= 0){ size = "standard"; why = "no quantity on the code"; }
-    else if(qty <= capStd){ size = "standard"; why = "auto"; }
-    else { size = "xl"; why = "auto"; }
-  }else why = "you picked it";
+    if(!isFinite(qty) || qty <= 0){ size = "xl"; why = "unknown"; }
+    else if(qty <= capStd * ROOMY){ size = "standard"; why = "roomy"; }
+    else if(qty <= capStd){ size = "xl"; why = "close"; }
+    else { size = "xl"; why = "over"; }
+  }else why = "picked";
 
   const cap = size === "xl" ? capXL : capStd;
   const name = "magazine-" + size + "-" + tape + "mm";
@@ -1776,15 +1786,18 @@ function recommend(){
     bits.push("<b>" + tape + " mm tape</b> because you set it");
   else
     bits.push("<b>" + tape + " mm tape</b> for " + pk.name);
-  if(why === "auto" && size === "xl")
-    bits.push("<b>XL</b> because " + qty.toLocaleString() +
+  if(why === "over")
+    bits.push("<b>XL</b> — " + qty.toLocaleString() +
       " will not fit a standard's " + capStd.toLocaleString());
-  else if(why === "auto")
-    bits.push("<b>standard</b> holds " + capStd.toLocaleString() +
-      ", enough for " + qty.toLocaleString());
-  else if(why === "no quantity on the code")
-    bits.push("<b>standard</b> by default — " + why);
-  else bits.push("<b>" + (size === "xl" ? "XL" : "standard") + "</b> because " + why);
+  else if(why === "close")
+    bits.push("<b>XL</b> — " + qty.toLocaleString() + " would fill a standard to " +
+      Math.round(100*qty/capStd) + "%, near enough that it is not worth the risk");
+  else if(why === "roomy")
+    bits.push("<b>standard</b> — " + qty.toLocaleString() + " of about " +
+      capStd.toLocaleString());
+  else if(why === "unknown")
+    bits.push("<b>XL</b> by default, since nothing says how much is on the reel");
+  else bits.push("<b>" + (size === "xl" ? "XL" : "standard") + "</b>, your pick");
   el.plateWhy.innerHTML = bits.join(". ") + ".";
 
   const pct = isFinite(qty) && qty > 0 ? qty / cap : 0;
