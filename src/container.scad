@@ -19,6 +19,10 @@ $fn = 100;
 use <hardware.scad>   // countersunk_m2_5, shared with the other file
 
 counterbore_spacing = 0.6;
+/* Height of the lid's spigot under each screw boss. body() cuts the pocket it
+ * plugs into as cylinder(h=1, d1=4, d2=5), so the spigot may not be taller
+ * than 1mm or it bottoms out and holds the lid off its seat. */
+lid_boss_h = 0.8;   // 0.2mm clearance in a 1.0mm pocket; 1.0 bottomed out
 tape_spacing        = 0.8;
 slider_spacing      = 0.5;
 side_wall_thickness = 1.25;
@@ -1066,7 +1070,12 @@ module body(width = 8,
             translate([pos.x,pos.y,side_wall_thickness+spaced_width-1]) cylinder(h=1,d1=4,d2=5);
         }
         translate([sp([slider_pos+1,-18.79]).x, sp([slider_pos+1,-18.79]).y, spaced_width/2+side_wall_thickness])
-            rotate([90,0,0])cylinder(h=1.51,d=4.4);
+            rotate([90,0,0])
+            {
+                cylinder(h=0.41, d=4.6);
+                translate([0,0,1.81]) cylinder(h=8.00, d=6.0);
+                cylinder(h=7.50, d=2.5);
+            }
 
         // LABEL
         translate([sp([-8.75,33]).x, sp([-8.75,33]).y - label_drop, spaced_width/2+side_wall_thickness+0.01]) rotate([0,0,2.75])
@@ -1148,7 +1157,7 @@ module lid()
             for (raw = screw_bosses())
             {
                 pos = sp(raw);
-                translate([pos.x,pos.y,-1.2]) cylinder(h=1.2, d1=4 - counterbore_spacing, d2=5 - counterbore_spacing);
+                translate([pos.x,pos.y,-lid_boss_h]) cylinder(h=lid_boss_h, d1=4 - counterbore_spacing, d2=5 - counterbore_spacing);
             }
 
             hull()
@@ -1215,7 +1224,11 @@ module slider(width=8)
             translate([sp([slider_pos,10.5-10.4]).x, sp([slider_pos,10.5-10.4]).y, -.01]) cylinder(h=1.6,d=2.2);
         }
         translate([sp([slider_pos+1,-18.61]).x, sp([slider_pos+1,-18.61]).y, width/2])
-            rotate([-90,0,0])cylinder(h=4.51,d=4.4);
+            rotate([-90,0,0])
+            {
+                cylinder(h=5.61,  d=4.6);
+                cylinder(h=16.01, d=3.6);
+            }
 
     }
     // Detent bumps stay at true 3mm pitch, but the track has to reach both

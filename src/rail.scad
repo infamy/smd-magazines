@@ -186,24 +186,87 @@ module rail_centered()
     rotate([-90,0,0])translate([0,0,1])import("LordAsdi_sources/rail_100mm.stl");
 }
 
+/* ------------------------------------------------------------------
+ * Leaf spring geometry, taken off the channel it has to live in.
+ *
+ * Measured off 2d_spring_cutout() intersected with 2d_rail_body(): the leaf
+ * rides in a slot running r = 99.100 to r = 100.099 about (0,-98) - 0.999mm
+ * for a 0.8mm leaf - with a bead pocket 2.598mm deep centred on r = 99.200 at
+ * +-14 degrees.  The leaf's mid-surface therefore sits on r = 99.5995, and its
+ * DEVELOPED half-width out to the bead centre is that radius times the pocket
+ * angle: 24.3367mm, so 48.6735mm bead to bead.
+ *
+ * It used to be cut at 50mm, i.e. 1.3265mm (2.7%) too wide, and that is a hard
+ * interference, not slop: bent onto the channel's own arc, 1.44mm2 of the
+ * leaf's cross-section lands inside solid rail, 0.35mm of each bead sticking
+ * out past its pocket.  The leaf cannot lose the extra length by squashing -
+ * 2.7% compressive strain is 82MPa, past PLA's yield - and the free 39.9mm
+ * span between the two captive edges buckles at about 1/124 of that load.  So
+ * it folds instead of taking the arc.  Best case the excess goes into one
+ * smooth extra hump: the crown rises 3.3mm above where the channel wants it
+ * and the peak bending strain is 2.0%, right at PLA's limit.  Localised into
+ * one 4mm ligament instead, the fold radius is 1.4mm and the strain 28%.
+ * Either way the part takes a permanent set - which is the reported symptom.
+ *
+ * Fixed outright rather than put behind a flag: the part as drawn does not fit
+ * the rail it is for.  Correct leaf: 51.4735 wide, 48.6735 bead to bead.
+ * ------------------------------------------------------------------ */
+spring_seat_r     = 99.5995;   // mid-surface radius of the channel slot
+spring_seat_angle = 14;        // where 2d_spring_cutout() puts the bead pockets
+spring_t          = 0.8;       // the slot is 0.999mm, so this cannot grow past
+                               // about 0.85 without cutting a new rail
+spring_bead_d     = 2.8;       // pocket is 3.4 -> 0.3mm radial slack, and the
+                               // bead must lift 1.4mm to escape while the leaf
+                               // can only lift 0.0995mm.  Capture is positive.
+spring_slot_pitch = 6;
+spring_slot_w     = 2;
+spring_slot_land  = 3;         // slot end centre, measured in from the bead
+
+/* Continuous, unslotted land down the centre line of the leaf.
+ *
+ * 0 reproduces the old pattern exactly, and the old pattern makes the leaf a
+ * ladder: every 6mm a slot severs 44.7 of the 51.5mm width, leaving the two
+ * 3.4mm beaded edges - 13% of the width - as the only thing joining the two
+ * halves.  Effective torsional constant 2.754mm4 against 8.785 for the same
+ * plate unslotted, i.e. 31%, which is why the leaf racks and takes a set when
+ * it is handled, and why anything riding on the crown crosses an open 2mm gap
+ * fifteen times in 100mm.
+ *
+ * spring_spine = 6 splits each slot in two and leaves 6mm of unbroken plate
+ * along the crown - the line that actually stands proud of the rail.  J_eff
+ * goes to 4.377mm4 (50% of solid, +59%) and the crown becomes a continuous
+ * running surface.  Costs 15% of the slot area.  Not the default, because it
+ * changes a printed part that is not itself wrong. */
+spring_spine      = 0;
+
+/* Developed bead-centre-to-bead-centre width.  +2*rail_grow_x because
+ * 2d_stretch_x() inserts exactly that much STRAIGHT band into the middle of
+ * the channel, and a straight band develops 1:1. */
+function spring_span() =
+    2 * spring_seat_r * spring_seat_angle * PI / 180 + 2 * rail_grow_x;
+
+function spring_slot_runs(w) =
+    let (o = w/2 - spring_slot_land)
+    spring_spine > 0 ? [[-o, -(spring_spine/2 + spring_slot_w/2)],
+                        [ (spring_spine/2 + spring_slot_w/2), o]]
+                     : [[-o, o]];
+
 module spring(l=100)
 {
     // Width across x, between the centres of the two bead rods. `l` is the
     // length along y, so this is deliberately not called a length.
-    /* Width across the leaf, and it MUST follow the channel. 2d_spring_cutout is
-     * widened by 2*rail_grow_x in 2d_rail_profile, so a spring left at 50 rattles
-     * in a 75mm XL channel and does not preload anything. */
-    spring_w = 50 + 2 * rail_grow_x;
+    spring_w = spring_span();
 
     difference()
     {
         group()
         {
-            cube([spring_w+2.8,l,0.8],center=true);
-            for (x=[1,-1]) translate([x*spring_w/2,l/2,0.4]) difference()
+            cube([spring_w + spring_bead_d, l, spring_t], center=true);
+            for (x=[1,-1]) translate([x*spring_w/2, l/2, spring_t/2]) difference()
             {
-                rotate([90,0,0])cylinder(d=2.8,h=l);
-                translate([-3/2,-l-1,-3])cube([3,l+2,3]);
+                rotate([90,0,0]) cylinder(d=spring_bead_d, h=l);
+                translate([-(spring_bead_d+0.2)/2, -l-1, -3])
+                    cube([spring_bead_d+0.2, l+2, 3]);
             }
         }
 
@@ -211,13 +274,15 @@ module spring(l=100)
          * y=l/2, putting the last slot across the end face and shaving the
          * plate's last millimetre over 46 of its 52.8mm width. Keep >=4mm of
          * land. dir starts at the second hole so y=0 is not cut twice. */
-        for (y = [0 : 6 : floor((l/2 - 4)/6)*6])
+        for (y = [0 : spring_slot_pitch :
+                  floor((l/2 - 4)/spring_slot_pitch)*spring_slot_pitch])
         {
-            for (dir = (y == 0 ? [1] : [1,-1])) hull()
-            {
-                translate([-(spring_w/2-3),y*dir,-1]) cylinder(d=2,h=3);
-                translate([ (spring_w/2-3),y*dir,-1]) cylinder(d=2,h=3);
-            }
+            for (dir = (y == 0 ? [1] : [1,-1]))
+              for (run = spring_slot_runs(spring_w)) hull()
+              {
+                translate([run[0], y*dir, -1]) cylinder(d=spring_slot_w, h=spring_t+2);
+                translate([run[1], y*dir, -1]) cylinder(d=spring_slot_w, h=spring_t+2);
+              }
         }
     }
 }
