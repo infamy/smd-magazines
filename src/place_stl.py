@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
 """Move STLs onto the bed, in place.
 
     place_stl.py --at X,Y body.stl badge.stl

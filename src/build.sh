@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: MIT
 # Build every printable variant: six magazines and two rails.
 #
 #   ./build.sh              everything

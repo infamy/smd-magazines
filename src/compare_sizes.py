@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
 """Compare a grown magazine against the standard, point by point.
 
 Every seam bug we have hit has the same shape: a constant that did not

@@ -15,12 +15,23 @@ slider, rail and leaf spring — is not ours.
 | **[@LordAsdi](https://www.printables.com/model/580643)** | The original SMD Component Tape Magazine. Every 2D profile in `src/` is projected from their STLs, which are kept verbatim in `src/LordAsdi_sources/`. Licensed **CC-BY 4.0**. |
 | **T. Wirtl (tobi)** | The parametric OpenSCAD remix that turned those STLs into adjustable code. `src/container.scad` and `src/rail.scad` keep their original headers. Licensed **CC-BY-SA 4.0**. |
 | **[Bryan Varner](https://www.printables.com/model/1350841)** | The Varnerized Edition, the version this tree started from. Licensed **CC-BY-SA 4.0**. |
-| **[Robin Reiter](https://www.youtube.com/watch?v=YbU5u_0wWts)** | Not a code ancestor — the *inspiration*. His "SMD Magazines G2" video is where the anti-release lip idea comes from. Stills and the transcript are in `reference/`. |
+| **[Robin Reiter](https://www.youtube.com/watch?v=YbU5u_0wWts)** | Not a code ancestor — the *inspiration*. His "SMD Magazines G2" video is where the anti-release lip idea comes from. |
 
 Our additions are the anti-release lip, the two-colour badge, the XL size, the
-long rail, and the build tooling. Everything inherits **CC-BY-SA 4.0** from the
-chain above. The unmodified upstream download sits beside this tree in
-`../parametric-smd-component-magazine-project/`.
+long rail, the build tooling and the label maker.
+
+## Licence
+
+Two licences, because this repository holds two different kinds of thing.
+
+| | |
+|---|---|
+| **[CC-BY-SA 4.0](LICENSE)** | The design. `src/*.scad`, the imported profiles in `src/LordAsdi_sources/`, the renders and this documentation. Not a free choice: two of the upstreams above are share-alike, so anything derived from them has to be too. Attribution and share-alike carry on to anything you make from it. |
+| **[MIT](LICENSE-MIT)** | The software. `tools/label-maker.html` and the build tooling in `src/` — `build.sh`, `make_3mf.py`, `place_stl.py`, `compare_sizes.py`, `draw_rail_profile.py`. Written here from scratch, and no use to anyone under a licence Creative Commons themselves [advise against for code](https://creativecommons.org/faq/#can-i-apply-a-creative-commons-license-to-software). |
+
+Every file under MIT carries an `SPDX-License-Identifier: MIT` line, so there
+is no guessing which side of the line it falls on. Anything without one is
+CC-BY-SA 4.0.
 
 The lip is **not** a copy of Robin's part. Our lever is a different mechanism —
 a full-depth flap, not a cantilever — so ours matches the intent, not
@@ -28,9 +39,15 @@ the geometry.
 
 ## What you can print
 
-Everything in `print/` is a plain **core-spec 3MF**: geometry and filament
-assignment, nothing else. No slicer profile is baked in, so import one into
-whatever slicer you use and apply your own settings. They come in a 0.4 and a 0.6 nozzle
+Ready-to-print files are attached to the [latest
+release](../../releases/latest) — the repository itself carries source only, so
+a clone stays small and nothing here is a stale copy of something the build
+produces. To make them yourself instead, run `src/build.sh`; they land in
+`print/`.
+
+Either way they are plain **core-spec 3MF**: geometry and filament assignment,
+nothing else. No slicer profile is baked in, so import one into whatever slicer
+you use and apply your own settings. They come in a 0.4 and a 0.6 nozzle
 variant; see below for why that matters and which to take.
 
 ```
@@ -111,6 +128,46 @@ edge, shaving the last millimetre across 46 of its 52.8mm width.
 
 ![Rail](reference/renders/rail.png)
 
+## Labelling what you put in them
+
+`tools/label-maker.html` answers the two questions that come up every time a
+reel arrives: which magazine to print for it, and what goes on the card.
+
+![Eight labels at actual size](reference/renders/labels-sample.png)
+
+Open the file — that is the whole install. No build step, no server, no
+network, no account. Scan a reel with a USB barcode scanner (they type like a
+keyboard) or paste a code; DigiKey and Mouser Data Matrix, LCSC/JLCPCB QR, and
+bare part numbers all work. Nothing about the part is looked up online, because
+the barcode already carries the manufacturer part number and the quantity.
+
+**Which magazine.** Tape width comes from the package, following EIA-481, read
+out of the part number where that number carries it — which covers most
+passives and almost no ICs. When it cannot tell, it says so rather than
+defaulting to 8 mm and sending you off to print the wrong case. Standard
+against XL is the reel quantity against
+`π(r² − r_hub²) / (carrier × pitch)`, using the pocket radii from the table
+above; it reproduces this README's own published figures of ~800 and ~1600 of
+0603 as 801 and 1678. Standard has to be a clear win — inside three quarters of
+one — because the sensitive term in that formula is carrier thickness, which is
+a dropdown rather than a measurement.
+
+**The label.** Matches `label(width)` in `container.scad` exactly: 41.4 ×
+*width* + 0.2 × 3.3 mm, the same slot as the blank cards. The package runs up
+the end of the card reversed out of a band of the second filament, turned 90°;
+the value gets the rest. Output is a plain core-spec 3MF with two objects and
+two base materials, the same shape `make_3mf.py` writes, so it imports beside
+the magazine parts — assign the two to AMS slots. Labels queue up as you scan,
+and **Save plate** writes them all as one 3MF laid out for your bed.
+
+Geometry is built in the page: text rasterised at 40 px/mm, contours traced off
+the bitmap, simplified, holes bridged and ear-clipped, then extruded to a
+closed shell. Three separate things can be too fine for a nozzle — the strokes,
+the card left standing between two glyphs, and the counter inside a `0` — and
+the page measures all three and reports the worst before you print. Part-number
+decoding has a table of known-good cases baked in; open with `?selftest` to run
+them.
+
 ## Regenerating the figures
 
 ```bash
@@ -133,11 +190,11 @@ $OPENSCAD --render -D 'SCENE="widths"' -D SPAN=75 --imgsize=1400,1000 \
 ## Layout
 
 ```
-print/       ready-to-load 3MFs - this is what you want, split by nozzle
-stl/         the raw STLs behind each 3MF, one folder per variant
 src/         OpenSCAD sources, build tooling, imported profiles
-reference/   G2 stills, transcript, renders, measured drawings
-archive/     superseded scripts and outputs, kept because this is not a repo
+tools/       label-maker.html - the reel intake bench, see below
+reference/   renders and measured drawings
+print/       built 3MFs land here     (not in git; see Releases)
+stl/         built STLs land here     (not in git)
 ```
 
 ## Building

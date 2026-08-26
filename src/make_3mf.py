@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
 """Write a plain 3MF from STLs. No slicer needed to build one, and no slicer
 profile embedded in it.
 

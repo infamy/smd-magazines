@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
 """Draw the annotated rail side profile used in the README.
 
 Self-contained: it renders the standard rail's 2D section with OpenSCAD into a
