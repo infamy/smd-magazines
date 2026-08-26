@@ -98,6 +98,10 @@ header.top{display:flex; flex-wrap:wrap; align-items:flex-end; gap:18px;
 .btn.primary:hover:not(:disabled){filter:brightness(1.09); color:var(--on-accent)}
 
 .hint{margin:0; font-size:12.5px; color:var(--muted)}
+.byhand{display:flex; flex-direction:column; gap:10px; padding-top:12px;
+        border-top:1px solid var(--line)}
+.orline{font:600 10px/1 "IBM Plex Mono",monospace; letter-spacing:.13em;
+        text-transform:uppercase; color:var(--faint)}
 .hint code,.k{font-family:"IBM Plex Mono",monospace; font-size:12px;
               background:var(--panel-2); padding:1px 4px; border-radius:2px}
 
@@ -110,6 +114,7 @@ header.top{display:flex; flex-wrap:wrap; align-items:flex-end; gap:18px;
 .chip[data-src="mouser"]{color:var(--mo)}
 .chip[data-src="lcsc"]{color:var(--lc)}
 .chip[data-src="manual"],.chip[data-src="generic"]{color:var(--muted)}
+.chip[data-src="tracking"]{color:var(--warn)}
 
 .fields{width:100%; border-collapse:collapse; font-size:13px}
 .fields th,.fields td{text-align:left; padding:5px 0; vertical-align:top;
@@ -242,7 +247,7 @@ footer.note code{font-family:"IBM Plex Mono",monospace; font-size:12px;
 </header>
 
 <section class="panel" style="margin-top:20px">
-  <div class="phead"><h2>Scan</h2><div class="rule"></div>
+  <div class="phead"><h2>The part</h2><div class="rule"></div>
     <span class="chip" data-src="manual" id="srcchip"><i class="dot"></i>No code</span>
   </div>
   <div class="pbody">
@@ -254,6 +259,21 @@ footer.note code{font-family:"IBM Plex Mono",monospace; font-size:12px;
     <p class="hint">A USB scanner types like a keyboard &mdash; click the field and
       scan. DigiKey and Mouser Data&nbsp;Matrix, LCSC/JLCPCB QR, or a bare part
       number. <code>Enter</code> queues the label and clears for the next reel.</p>
+
+    <div class="byhand">
+      <span class="orline">or enter it by hand</span>
+      <div class="grid">
+        <div class="opt"><label for="mvalue">Value</label>
+          <input class="num" id="mvalue" autocomplete="off" spellcheck="false"
+                 placeholder="10k&#8486;"></div>
+        <div class="opt"><label for="pkg">Package</label>
+          <select id="pkg"></select></div>
+        <div class="opt"><label for="qty">Quantity on the reel</label>
+          <input class="num" id="qty" inputmode="numeric" placeholder="unknown"></div>
+      </div>
+      <p class="hint">Package sets the tape width, and with the quantity it picks
+        standard or XL. Both are overridable under <b>Print this</b>.</p>
+    </div>
     <table class="fields" id="fields" hidden><tbody></tbody></table>
   </div>
 </section>
@@ -278,10 +298,6 @@ footer.note code{font-family:"IBM Plex Mono",monospace; font-size:12px;
       </div>
       <div class="pbody">
         <div class="grid">
-          <div class="opt"><label for="pkg">Package</label>
-            <select id="pkg"></select></div>
-          <div class="opt"><label for="qty">Quantity</label>
-            <input class="num" id="qty" inputmode="numeric" placeholder="unknown"></div>
           <div class="opt"><label for="tape">Tape width</label>
             <select id="tape">
               <option value="8">8 mm</option><option value="12">12 mm</option>
@@ -557,6 +573,15 @@ function decodeScan(raw){
     for(const k of Object.keys(f)) fields[(FI_NAME[k] || k) + " (" + k + ")"] = f[k];
     return {source, fields, mpn, dpn, qty:f.Q || ""};
   }
+  /* A long run of bare digits is one of the other barcodes on the reel. Older
+     DigiKey labels carry a set of 1D Code 128 strips - order, invoice, pick
+     and tracking numbers - alongside the one that actually names the part, and
+     none of the numeric ones carry part data. Say so, rather than accepting it
+     as a part number and leaving a magazine labelled 0135064000000250363561. */
+  if(/^\d{12,}$/.test(text))
+    return {source:"tracking", fields:{"Tracking barcode":text},
+            mpn:"", dpn:"", qty:"", inert:true};
+
   return {source:"manual", fields:{"Part number":text}, mpn:text, dpn:"", qty:""};
 }
 
@@ -1662,7 +1687,7 @@ const el = {};
 for(const id of ["scan","fields","srcchip","l1","l2","l3","s1","s2","s3","tape",
                  "face","depth","orient","c1","c2","preview","stagenote","verdict",
                  "qlist","toast","bed","pkg","qty","pitch","carrier","size","nozzle",
-                 "plateName","platePath","plateWhy","fillbar","fillLeft","fillRight","badge",
+                 "plateName","platePath","plateWhy","fillbar","fillLeft","fillRight","badge","mvalue",
                  "railNote"])
   el[id] = document.getElementById(id);
 
@@ -1683,6 +1708,7 @@ function toast(msg){
   clearTimeout(toastT);
   toastT = setTimeout(() => el.toast.classList.remove("on"), 2800);
 }
+const text0 = s => String(s).trim();
 const esc = s => String(s).replace(/[&<>"]/g,
   c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]);
 
@@ -1825,9 +1851,12 @@ function refresh(){
   const items = specItems(s);
   document.getElementById("m-cap").textContent = items.length
     ? (Math.max.apply(null, items.map(i => i.size)) * 0.72).toFixed(1) + " mm" : "—";
+  const lines = items.filter(i => i.type === "text").length;   // not the badge
+  const bdg = items.length > lines;
   el.stagenote.textContent = items.length
-    ? "shown at actual size · " + items.length + (items.length === 1 ? " line" : " lines")
-    : "type a line, or scan a code";
+    ? "shown at actual size · " + (lines ? lines + (lines === 1 ? " line" : " lines") : "")
+      + (lines && bdg ? " · " : "") + (bdg ? "size band" : "")
+    : "type a value, or scan a code";
   clearTimeout(meshTimer);
   meshTimer = setTimeout(() => buildAndScore(s), 220);
 }
@@ -1880,7 +1909,19 @@ function applyScan(raw){
   el.srcchip.setAttribute("data-src", r.source);
   el.srcchip.innerHTML = '<i class="dot"></i>' +
     ({digikey:"DigiKey", mouser:"Mouser", lcsc:"LCSC / JLC",
-      generic:"2D barcode", manual:"Typed"})[r.source];
+      generic:"2D barcode", manual:"Typed", tracking:"No part data"})[r.source];
+
+  /* Nothing to fill in from this one, and nothing to overwrite either - the
+     label already on screen is likely the reel the user actually wants. */
+  if(r.inert){
+    el.fields.hidden = false;
+    el.fields.querySelector("tbody").innerHTML =
+      "<tr><th>Tracking barcode</th><td>" + esc(text0(raw)) + "</td></tr>" +
+      "<tr><th>What to scan</th><td>This strip carries no part data. Use the "
+      + "Data Matrix square (DigiKey, Mouser) or the QR (LCSC) on the same "
+      + "label, or type the part number.</td></tr>";
+    return;
+  }
 
   const g = guessPart(r.mpn || r.dpn);
   const rows = Object.entries(r.fields).filter(kv => kv[1] && String(kv[1]).length);
@@ -1929,6 +1970,7 @@ function applyScan(raw){
   el.l3.value = "";
   el.s1.value = "1.5";
   el.s2.value = "0.85";
+  el.mvalue.value = el.l1.value;
   refresh();
 }
 function applyPackage(){
@@ -1937,6 +1979,9 @@ function applyPackage(){
   el.tape.value = String(p.tape);
   el.pitch.value = String(p.pitch);
   el.carrier.value = String(p.carrier);
+  // picking a package by hand should put it on the label, same as a scan does
+  if(!el.badge.value.trim() || PKGS.some(q => q.id === el.badge.value.trim()))
+    el.badge.value = p.id;
 }
 
 /* ---- queue */
@@ -2004,6 +2049,13 @@ const slug = s => ((s.lines.find(l => l.text.trim()) || {text:"label"}).text
 for(const id of ["l1","l2","l3","s1","s2","s3","tape","face","depth","orient",
                  "c1","c2","qty","pitch","carrier","size","nozzle","badge"])
   el[id].addEventListener("input", refresh);
+
+/* The by-hand value box and the label's first line are the same field seen
+   from two places - one is where you enter a part, the other is where you
+   fine-tune what gets printed - so they track each other rather than
+   competing. */
+el.mvalue.addEventListener("input", () => { el.l1.value = el.mvalue.value; refresh(); });
+el.l1.addEventListener("input", () => { el.mvalue.value = el.l1.value; });
 el.pkg.addEventListener("input", () => { applyPackage(); refresh(); });
 
 el.scan.addEventListener("input", () => {
@@ -2020,6 +2072,8 @@ document.getElementById("clear").onclick = () => {
   el.srcchip.setAttribute("data-src","manual");
   el.srcchip.innerHTML = '<i class="dot"></i>No code';
   el.l1.value = el.l2.value = el.l3.value = "";
+  el.mvalue.value = ""; el.badge.value = "";
+  el.pkg.value = "?";
   refresh(); el.scan.focus();
 };
 function addToQueue(){
