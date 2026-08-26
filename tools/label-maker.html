@@ -592,6 +592,78 @@ function engF(pf){
 }
 const trim = n => String(Number(n.toFixed(3)));
 
+/* Standard resistance decades. A four-digit resistance code is three digits
+   of mantissa and a decade multiplier, and the mantissa is always an E-series
+   value - which makes it a good enough filter to read a resistance out of a
+   part number nobody has written a rule for. A date code, a lot number or an
+   order reference will not sit on an E96 step and be preceded by a tolerance
+   letter at the same time. */
+const E24 = [100,110,120,130,150,160,180,200,220,240,270,300,330,360,390,430,
+             470,510,560,620,680,750,820,910];
+const E96 = [100,102,105,107,110,113,115,118,121,124,127,130,133,137,140,143,
+             147,150,154,158,162,165,169,174,178,182,187,191,196,200,205,210,
+             215,221,226,232,237,243,249,255,261,267,274,280,287,294,301,309,
+             316,324,332,340,348,357,365,374,383,392,402,412,422,432,442,453,
+             464,475,487,499,511,523,536,549,562,576,590,604,619,634,649,665,
+             681,698,715,732,750,768,787,806,825,845,866,887,909,931,953,976];
+const TOL_LETTER = {F:"1%", J:"5%", G:"2%", D:"0.5%", B:"0.1%", Z:""};
+
+/* Every chip resistor part number puts the tolerance letter immediately
+   before or after the resistance code. Find that pair, check the mantissa is
+   a real E-series value, and the vendor's own naming scheme stops mattering -
+   Uniohm's 0805W8F3901T5E reads the same way as anyone else's. */
+function genericR(s){
+  const pat = /([FJGDBZ])([0-9]{3,4}|[0-9]{1,3}R[0-9]{0,2}|R[0-9]{1,3})(?![0-9])/g;
+  let m, hit = null;
+  while((m = pat.exec(s))){
+    const tol = TOL_LETTER[m[1]], code = m[2];
+    if(/^0+$/.test(code)){ hit = {value:"0Ω", tol:""}; continue; }
+    if(/R/.test(code)){ hit = {value:decodeR(code), tol}; continue; }
+    const mant = Number(code.length === 4 ? code.slice(0,3) : code.slice(0,2) + "0");
+    if(E96.indexOf(mant) >= 0 || E24.indexOf(mant) >= 0){
+      const v = decodeR(code);
+      if(v) hit = {value:v, tol};
+    }
+  }
+  return hit;
+}
+
+/* A capacitor must never be run through the resistance scan. CC0805KRX7R9BB103
+   contains "B103", and B is the tolerance letter for 0.1% while 103 is a
+   perfectly good E-series resistance code - so the scan would read a 10nF
+   capacitor as a 10k resistor and say so with complete confidence. A
+   dielectric code or a known MLCC prefix settles which family it is first. */
+const IS_MLCC = /(X[5679][RSTUV]|C0G|NP0|Y5V|Z5U)/i;
+const MLCC_PREFIX = /^(CL|GRM|GCM|GRT|CC|CGA|UMK|LMK|EMK|TMK)/;
+
+/* MLCCs put the capacitance in a three-digit code, either just before the
+   tolerance letter or right at the end of the part number. */
+function genericC(s){
+  const TOL = {J:"5%", K:"10%", M:"20%", Z:"+80/-20%"};
+  /* The case size sits right before the tolerance letter in CC0805KRX7R..., so
+     a naive scan reads "805" then "K" and calls a 10nF part 8uF. Anything
+     overlapping the size code is the size, not a capacitance. */
+  const e = s.match(EIA);
+  const at = e ? s.indexOf(e[1]) : -1;
+  const end = at >= 0 ? at + e[1].length : -1;
+  const overlapsSize = (a,b) => at >= 0 && a < end && b > at;
+  const sizeTol = s.match(/^[A-Z]{2}[0-9]{4}([JKMZ])/);   // CC0805K...
+
+  const re = /([0-9]{3})([JKMZ])(?![0-9])/g;
+  let m;
+  while((m = re.exec(s))){
+    if(overlapsSize(m.index, m.index + 3)) continue;
+    const v = decodeC(m[1]);
+    if(v) return {value:v, tol:TOL[m[2]] || ""};
+  }
+  m = s.match(/([0-9]{3})$/);
+  if(m && !overlapsSize(s.length - 3, s.length)){
+    const v = decodeC(m[1]);
+    if(v) return {value:v, tol:sizeTol ? (TOL[sizeTol[1]] || "") : ""};
+  }
+  return null;
+}
+
 function guessPart(mpn){
   const out = {size:"", value:"", tol:"", pkg:""};
   if(!mpn) return out;
@@ -673,6 +745,12 @@ function guessPart(mpn){
     out.size = m[1]; out.pkg = m[1];
     out.value = decodeC(m[2]);
     out.tol = {J:"5%",K:"10%",M:"20%",Z:"+80/-20%"}[m[3]] || "";
+  }
+  /* Nothing vendor-specific matched. Fall back to the E-series scan, which
+     covers the formats nobody has written a rule for yet. */
+  if(!out.value){
+    const g = (IS_MLCC.test(s) || MLCC_PREFIX.test(s)) ? genericC(s) : genericR(s);
+    if(g && g.value){ out.value = g.value; if(!out.tol) out.tol = g.tol; }
   }
   return out;
 }
@@ -1941,6 +2019,49 @@ document.getElementById("themer").onclick = () => {
   document.documentElement.setAttribute("data-theme", dark ? "light" : "dark");
   refresh(); renderQueue();
 };
+
+/* Every part-number rule in this file was written because a real reel came
+   through and decoded wrong, or not at all - and two of them were only caught
+   because a neighbouring case broke at the same time. Open the page with
+   ?selftest to re-run the lot; it prints a table and nothing else changes. */
+const DECODE_TESTS = [
+  ["0805W8F3901T5E","3.9kΩ","0805"], ["0603WAF1001T5E","1kΩ","0603"],
+  ["0402WGF1002TCE","10kΩ","0402"],  ["1206W4F1003T5E","100kΩ","1206"],
+  ["0805W8J0000T5E","0Ω","0805"],
+  ["CC0805KRX7R9BB103","10nF","0805"], ["CC0603KRX7R7BB104","100nF","0603"],
+  ["CC0402KRX5R5BB105","1µF","0402"],
+  ["RS-05K1001FT","1kΩ","0805"],  ["RS-05K4R70FT","4.7Ω","0805"],
+  ["RS-03K0000ZT","0Ω","0603"],   ["RC0603FR-0710KL","10kΩ","0603"],
+  ["RC0402JR-070RL","0Ω","0402"], ["ERJ3EKF1002V","10kΩ","0603"],
+  ["CL10B104KB8NNNC","100nF","0603"], ["GRM188R71H104KA93D","100nF","0603"],
+  ["0603YC104KAT2A","100nF","0603"],  ["CRCW060310K0FKEA","10kΩ","0603"],
+  ["GRM21BR61E475KA12L","4.7µF","0805"],
+  // these carry no value or package in the part number, and must stay blank
+  // rather than being guessed at
+  ["ATSAMD21G18A-AU","",""], ["1N4148W","",""], ["AO3400A","",""],
+  ["TPS62740DSSR","",""],    ["2N7002","",""],  ["SS34","",""]
+];
+function selfTest(){
+  const rows = DECODE_TESTS.map(t => {
+    const g = guessPart(t[0]);
+    return {mpn:t[0], value:g.value || "—", package:g.pkg || "—",
+            ok:(g.value||"") === t[1] && (g.pkg||"") === t[2] ? "pass" : "FAIL",
+            expected:(g.value||"") === t[1] && (g.pkg||"") === t[2]
+                     ? "" : (t[1]||"—") + " / " + (t[2]||"—")};
+  });
+  const bad = rows.filter(r => r.ok === "FAIL").length;
+  console.log("part number decoding: " + (rows.length - bad) + "/" + rows.length
+              + (bad ? "  — " + bad + " FAILED" : "  all pass"));
+  console.table(rows);
+  return bad;
+}
+if(location.search.indexOf("selftest") >= 0){
+  // this script is at the end of the body, so DOMContentLoaded may already
+  // have fired by the time the listener would be added
+  if(document.readyState === "loading")
+    document.addEventListener("DOMContentLoaded", selfTest);
+  else selfTest();
+}
 
 /* Canvas takes its font from the document, so nothing may be rasterised
    before the webfonts arrive - otherwise the mesh is extruded from the
