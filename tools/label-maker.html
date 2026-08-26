@@ -502,16 +502,28 @@ function parseISO15434(raw){
       if(fi) push(fi, t.slice(fi.length));
     }
   }else{
-    let i = 0, guard = 0;
-    while(i < s.length && guard++ < 400){
-      const fi = FIS.find(f => s.startsWith(f, i));
-      if(!fi){ i++; continue; }
-      let j = i + fi.length, val = "";
-      while(j < s.length && !(j > i + fi.length && FIS.some(f => s.startsWith(f,j)))){
-        val += s[j]; j++;
-      }
-      push(fi, val); i = j;
-    }
+    /* No separators survived - a scanner stripped them, or a clipboard did.
+       Hunting for "the next field identifier" cannot work here: P, K, T, D and
+       L all occur inside the part numbers themselves, so RNCP0603FTD1K00 gets
+       chopped at its own P and comes out as "RNC". The field ORDER is fixed
+       though, so match on structure instead.
+
+       The manufacturer part ends where the order block begins. That block is
+       K<po>1K<sales order>, and "K, optional digits, 1K, digit" does not occur
+       inside a part number - not even inside one that ends in 1K00. */
+    let m = s.match(/^P(.+?)1P(.+?)(?=K\d*1K\d)/);
+    if(!m) m = s.match(/^P(.+?)1P(.+?)(?=1?[01]?K\d|4L[A-Z]{2}|Q\d+1[123]Z)/);
+    if(m){ push("P", m[1]); push("1P", m[2]); }
+    const grab = (re, fi) => { const x = s.match(re); if(x) push(fi, x[1]); };
+    grab(/(?:^|\D)K(\d*?)1K\d/, "K");
+    grab(/1K(\d+?)(?=10K|11K|4L|Q\d)/, "1K");
+    grab(/10K(\d+?)(?=11K|4L|Q\d)/, "10K");
+    grab(/11K(\d+?)(?=4L|Q\d)/, "11K");
+    grab(/4L([A-Z]{2})/, "4L");
+    grab(/Q(\d+?)(?=1[123]Z|20Z|$)/, "Q");
+    grab(/11Z([A-Z0-9]+?)(?=12Z|13Z|20Z|$)/, "11Z");
+    grab(/12Z(\d+?)(?=13Z|20Z|$)/, "12Z");
+    grab(/13Z(\d+?)(?=20Z|$)/, "13Z");
   }
   return out;
 }
@@ -623,6 +635,21 @@ function genericR(s){
     if(E96.indexOf(mant) >= 0 || E24.indexOf(mant) >= 0){
       const v = decodeR(code);
       if(v) hit = {value:v, tol};
+    }
+  }
+  /* Not every part keeps the tolerance letter next to the value. Stackpole
+     writes RNCP0603FTD1K00 - tolerance F right after the size, resistance in
+     R/K/M notation at the very end. A trailing R/K/M group is unambiguous
+     enough to read on its own: decodeR rejects a bare letter, so part numbers
+     ending in R like TPS62740DSSR fall through untouched. */
+  if(!hit){
+    const t = s.match(/(\d*[RKM]\d*)$/);
+    if(t){
+      const v = decodeR(t[1]);
+      if(v){
+        const tl = s.match(/\d{4}([FJGDBZ])/);      // 0603F...
+        hit = {value:v, tol:tl ? (TOL_LETTER[tl[1]] || "") : ""};
+      }
     }
   }
   return hit;
@@ -2036,6 +2063,8 @@ const DECODE_TESTS = [
   ["CL10B104KB8NNNC","100nF","0603"], ["GRM188R71H104KA93D","100nF","0603"],
   ["0603YC104KAT2A","100nF","0603"],  ["CRCW060310K0FKEA","10kΩ","0603"],
   ["GRM21BR61E475KA12L","4.7µF","0805"],
+  ["RNCP0603FTD1K00","1kΩ","0603"], ["RNCP0805FTD4K99","4.99kΩ","0805"],
+  ["RNCP1206FTD10R0","10Ω","1206"],
   // these carry no value or package in the part number, and must stay blank
   // rather than being guessed at
   ["ATSAMD21G18A-AU","",""], ["1N4148W","",""], ["AO3400A","",""],
