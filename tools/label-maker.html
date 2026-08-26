@@ -338,7 +338,7 @@ footer.note code{font-family:"IBM Plex Mono",monospace; font-size:12px;
       <dl class="metrics">
         <div class="metric"><dt>Card</dt><dd id="m-size">&mdash;</dd></div>
         <div class="metric"><dt>Cap height</dt><dd id="m-cap">&mdash;</dd></div>
-        <div class="metric" id="m-stroke-w"><dt>Thinnest stroke</dt>
+        <div class="metric" id="m-stroke-w"><dt>Thinnest feature</dt>
           <dd id="m-stroke">&mdash;</dd></div>
         <div class="metric"><dt>Triangles</dt><dd id="m-tris">&mdash;</dd></div>
       </dl>
@@ -682,31 +682,36 @@ function layout(lines, boxW, boxHFull, face, badge, nozzle){
   if(b){
     const bf = "Saira Extra Condensed";   // narrower glyph, so a bigger em fits
     c.font = "700 100px '" + bf + "', sans-serif";
-    const em = Math.max(c.measureText(b).width / 100, 0.1);
-    /* The band runs the full height of the card, and the digits are set along
-       it. Fitting the string flush would leave the gaps between digits at
-       whatever side bearing an extra-condensed face happens to carry - about
-       0.06em, which is 0.23mm here and would merge the pockets into a blob.
-       Tracking costs length only, never stroke, so the slack goes into the
-       gaps instead of into end margins: 0.07em of it takes the gap past half
-       a millimetre while the strokes stay at a full nozzle width. */
+    /* Four digits in one row cannot be made to print. The run they are set
+       along is the height of the card, which is fixed, so the cap height is
+       fixed with it - and at that cap the counter of a 0 comes out 0.40mm,
+       one bead, which closes to a solid blob. Nothing about the face or the
+       tracking changes that; only a bigger cap does. Splitting 0603 into two
+       rows halves the characters per row and so doubles the cap, and the
+       counter doubles with it. The band has the width to spare: it is running
+       across a 41.4mm card. */
+    const rows = b.length >= 4
+      ? [b.slice(0, Math.ceil(b.length/2)), b.slice(Math.ceil(b.length/2))]
+      : [b];
+    let em = 0, gaps = 0;
+    for(const r of rows){
+      em = Math.max(em, c.measureText(r).width / 100);
+      gaps = Math.max(gaps, r.length - 1);
+    }
     /* The band is drawn the full height of whatever card it is on, but the
        digits in it are sized off the 8mm card like everything else, so the
        badge is the same size on all three and a taller card simply carries
        more band above and below it. */
     const run = cardH(8) - 1.1;
-    const gaps = Math.max(b.length - 1, 1);
     const TRACK = 0.07;
-    const size = Math.min(run / (em + gaps*TRACK), boxW * 0.34);
-    const bw = size * 1.15;
-    /* Reversed type is zero-sum: fattening the digits thins the block webs
-       between them by exactly as much, so there is nothing to win by
-       emboldening - the balanced point is already the best available. The
-       only real lever is a narrower face, which raises the em for the same
-       run of card height and thickens both sides together. */
-    out.push({type:"badge", text:b, face:bf, size, x:0, y:yOff, w:bw, h:boxH,
-              track:TRACK * size, band:bw + 2*MARGIN, embolden:0,
-              bandX:-MARGIN, bandY:-MARGIN,
+    let size = run / (em + gaps*TRACK);
+    const rowGap = () => size*0.72 + 0.62;      // 0.62mm of card between rows
+    let bw = (rows.length - 1) * rowGap() + size*0.72 + 1.2;
+    const maxBw = boxW * 0.30;                  // never crowd out the value
+    if(bw > maxBw){ size *= maxBw / bw; bw = maxBw; }
+    out.push({type:"badge", rows, face:bf, size, track:TRACK * size,
+              rowGap:size*0.72 + 0.62, x:0, y:yOff, w:bw, h:boxH,
+              band:bw + 2*MARGIN, bandX:-MARGIN, bandY:-MARGIN,
               bandW:bw + 2*MARGIN, bandH:boxHFull + 2*MARGIN});
     x0 = bw + 0.9; w = boxW - x0;
   }
@@ -780,16 +785,13 @@ function drawLayout(ctx, items, scale, ink, ground){
       ctx.rotate(-Math.PI/2);
       ctx.font = "700 " + (it.size*scale) + "px '" + it.face + "', sans-serif";
       ctx.fillStyle = (ground === null) ? ink : ground;
-      const chars = it.text.split("");
-      const cw = chars.map(ch => ctx.measureText(ch).width);
-      const tr = (it.track || 0) * scale;
-      let run = tr * (chars.length - 1);
-      for(const v of cw) run += v;
-      const yc = inkCentre(ctx, it.text);
-      let cx = -run/2;
-      for(let i = 0; i < chars.length; i++){
-        ctx.fillText(chars[i], cx + cw[i]/2, yc);
-        cx += cw[i] + tr;
+      const n = it.rows.length;
+      for(let i = 0; i < n; i++){
+        // rotated -90, a row offset along the rotated y runs across the card,
+        // so row 0 sits to the left and reads 06 then 03 left to right
+        const off = (i - (n-1)/2) * it.rowGap * scale;
+        drawTracked(ctx, it.rows[i], 0, off + inkCentre(ctx, it.rows[i]),
+                    (it.track || 0) * scale);
       }
       ctx.restore();
     }else{
@@ -1329,12 +1331,58 @@ function minGap(mask, W, H){
   }
   return best === Infinity ? 0 : best;
 }
+/* The third thing that can be too thin, and the one that bit hardest: the
+   counter of a 0 or a 6. It is neither a stroke nor a gap between glyphs -
+   it is a hole inside one, so the two scans above both walk straight past it.
+   Invert, label, throw away the component that reaches the border - that is
+   the open background - and every component left is an enclosed counter. */
+function minCounter(mask, W, H){
+  const inv = new Uint8Array(W*H);
+  for(let i = 0; i < W*H; i++) inv[i] = mask[i] ? 0 : 1;
+  const INF = 1e9, d = new Float32Array(W*H);
+  for(let i = 0; i < W*H; i++) d[i] = inv[i] ? INF : 0;
+  const D1 = 1, D2 = 1.41421356;
+  const g = (x,y) => (x < 0 || y < 0 || x >= W || y >= H) ? 0 : d[y*W+x];
+  for(let y = 0; y < H; y++) for(let x = 0; x < W; x++){
+    if(!inv[y*W+x]) continue;
+    d[y*W+x] = Math.min(d[y*W+x], g(x-1,y)+D1, g(x,y-1)+D1,
+                        g(x-1,y-1)+D2, g(x+1,y-1)+D2);
+  }
+  for(let y = H-1; y >= 0; y--) for(let x = W-1; x >= 0; x--){
+    if(!inv[y*W+x]) continue;
+    d[y*W+x] = Math.min(d[y*W+x], g(x+1,y)+D1, g(x,y+1)+D1,
+                        g(x+1,y+1)+D2, g(x-1,y+1)+D2);
+  }
+  const lab = new Int32Array(W*H).fill(-1), st = [];
+  let best = Infinity;
+  for(let s0 = 0; s0 < W*H; s0++){
+    if(!inv[s0] || lab[s0] >= 0) continue;
+    let peak = 0, n = 0, border = false;
+    lab[s0] = s0; st.push(s0);
+    while(st.length){
+      const q = st.pop(); n++;
+      if(d[q] > peak) peak = d[q];
+      const x = q % W, y = (q - x) / W;
+      if(x === 0 || y === 0 || x === W-1 || y === H-1) border = true;
+      if(x > 0   && inv[q-1] && lab[q-1] < 0){ lab[q-1] = s0; st.push(q-1); }
+      if(x < W-1 && inv[q+1] && lab[q+1] < 0){ lab[q+1] = s0; st.push(q+1); }
+      if(y > 0   && inv[q-W] && lab[q-W] < 0){ lab[q-W] = s0; st.push(q-W); }
+      if(y < H-1 && inv[q+W] && lab[q+W] < 0){ lab[q+W] = s0; st.push(q+W); }
+    }
+    if(border || n < 6) continue;
+    best = Math.min(best, 2*peak/PPMM);
+  }
+  return best === Infinity ? 0 : best;
+}
+/* Three ways the lettering can be too fine for the nozzle, and the label is
+   only as good as the worst of them: the strokes themselves, the card left
+   standing between two glyphs, and the counter inside one. */
 function strokeReport(mask, W, H){
-  const ink = thinnestStroke(mask, W, H);
-  const web = minGap(mask, W, H);
-  if(!ink) return web;
-  if(!web) return ink;
-  return Math.min(ink, web);
+  let worst = Infinity;
+  for(const v of [thinnestStroke(mask, W, H), minGap(mask, W, H),
+                  minCounter(mask, W, H)])
+    if(v && v < worst) worst = v;
+  return worst === Infinity ? 0 : worst;
 }
 
 /* ==================================================================== 3MF ===
