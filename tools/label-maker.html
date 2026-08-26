@@ -1,0 +1,2165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reel Intake Bench</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&family=Saira+Extra+Condensed:wght@700;800&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap">
+<style>
+/* ---------------------------------------------------------------- tokens ---
+   Light is the base palette: this is used under workshop lighting. The
+   neutrals carry a slight cyan bias so they sit with the petrol accent
+   instead of reading as unconsidered grey.                                  */
+:root{
+  --ground:#E4E9E9; --panel:#F7FAFA; --panel-2:#EDF2F2; --stage:#1D2528;
+  --ink:#131819; --muted:#57666A; --faint:#849699; --line:#C4CFD1;
+  --line-hard:#A5B3B6; --accent:#0C6F79; --accent-soft:#D8EAEB;
+  --on-accent:#FFFFFF; --warn:#8F4D0E; --warn-soft:#F7E6D2;
+  --bad:#A32A20; --bad-soft:#F7DEDB; --good:#1F6B4E;
+  --dk:#C8102E; --mo:#0067B1; --lc:#D96412;
+  --shadow:0 1px 2px rgba(19,24,25,.07);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0F1416; --panel:#171E20; --panel-2:#1E2629; --stage:#080C0D;
+    --ink:#E4EBEC; --muted:#93A4A8; --faint:#6C7E82; --line:#2A3437;
+    --line-hard:#3D4A4D; --accent:#3FAFB6; --accent-soft:#12363A;
+    --on-accent:#06181A; --warn:#D9964A; --warn-soft:#33260F;
+    --bad:#E0776C; --bad-soft:#361A17; --good:#5CBE93;
+    --dk:#F0596E; --mo:#5AA9E6; --lc:#EE9350;
+    --shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0F1416; --panel:#171E20; --panel-2:#1E2629; --stage:#080C0D;
+  --ink:#E4EBEC; --muted:#93A4A8; --faint:#6C7E82; --line:#2A3437;
+  --line-hard:#3D4A4D; --accent:#3FAFB6; --accent-soft:#12363A;
+  --on-accent:#06181A; --warn:#D9964A; --warn-soft:#33260F;
+  --bad:#E0776C; --bad-soft:#361A17; --good:#5CBE93;
+  --dk:#F0596E; --mo:#5AA9E6; --lc:#EE9350;
+  --shadow:0 1px 2px rgba(0,0,0,.4);
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--ground); color:var(--ink);
+  font:400 15px/1.5 Archivo,"Helvetica Neue",Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{margin:0; font-weight:600; text-wrap:balance}
+button,input,select{font:inherit; color:inherit}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:2px}
+.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+      font-variant-numeric:tabular-nums}
+
+.wrap{max-width:1180px; margin:0 auto; padding:0 20px 64px}
+
+header.top{display:flex; flex-wrap:wrap; align-items:flex-end; gap:18px;
+           padding:24px 0 16px; border-bottom:1px solid var(--line-hard)}
+.brand{margin-right:auto; display:flex; flex-direction:column; gap:3px}
+.brand h1{font-size:25px; letter-spacing:-.015em}
+.brand p{margin:0; color:var(--muted); font-size:13.5px; max-width:58ch}
+.themer{border:1px solid var(--line-hard); background:var(--panel);
+        color:var(--muted); border-radius:2px; padding:5px 9px; cursor:pointer;
+        font-size:12px}
+.themer:hover{color:var(--ink); border-color:var(--accent)}
+
+.panel{background:var(--panel); border:1px solid var(--line); border-radius:3px;
+       box-shadow:var(--shadow)}
+.panel + .panel{margin-top:18px}
+.phead{display:flex; align-items:center; gap:10px; padding:12px 16px;
+       border-bottom:1px solid var(--line)}
+.phead h2{font:600 11px/1 "IBM Plex Mono",monospace; letter-spacing:.15em;
+          text-transform:uppercase; color:var(--muted)}
+.phead .rule{flex:1; height:1px; background:var(--line)}
+.pbody{padding:16px; display:flex; flex-direction:column; gap:14px}
+
+.cols{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:22px;
+      align-items:start; padding-top:20px}
+@media (max-width:980px){ .cols{grid-template-columns:minmax(0,1fr)} }
+
+/* ------------------------------------------------------------------ scan --- */
+.scanrow{display:flex; gap:8px}
+#scan{flex:1; min-width:0; padding:12px 13px; border:1px solid var(--line-hard);
+      border-radius:2px; background:var(--panel-2);
+      font-family:"IBM Plex Mono",monospace; font-size:15px}
+#scan::placeholder{color:var(--faint)}
+#scan:focus{border-color:var(--accent); background:var(--panel)}
+
+.btn{border:1px solid var(--line-hard); background:var(--panel-2); color:var(--ink);
+     border-radius:2px; padding:10px 15px; cursor:pointer; font-size:14px;
+     font-weight:500; white-space:nowrap}
+.btn:hover:not(:disabled){border-color:var(--accent); color:var(--accent)}
+.btn:disabled{opacity:.42; cursor:not-allowed}
+.btn.primary{background:var(--accent); border-color:var(--accent); color:var(--on-accent)}
+.btn.primary:hover:not(:disabled){filter:brightness(1.09); color:var(--on-accent)}
+
+.hint{margin:0; font-size:12.5px; color:var(--muted)}
+.byhand{display:flex; flex-direction:column; gap:10px; padding-top:12px;
+        border-top:1px solid var(--line)}
+.orline{font:600 10px/1 "IBM Plex Mono",monospace; letter-spacing:.13em;
+        text-transform:uppercase; color:var(--faint)}
+.hint code,.k{font-family:"IBM Plex Mono",monospace; font-size:12px;
+              background:var(--panel-2); padding:1px 4px; border-radius:2px}
+
+.chip{display:inline-flex; align-items:center; gap:7px; padding:4px 10px 4px 8px;
+      border:1px solid currentColor; border-radius:2px;
+      font:600 11px/1 "IBM Plex Mono",monospace; letter-spacing:.1em;
+      text-transform:uppercase}
+.chip .dot{width:7px; height:7px; border-radius:50%; background:currentColor}
+.chip[data-src="digikey"]{color:var(--dk)}
+.chip[data-src="mouser"]{color:var(--mo)}
+.chip[data-src="lcsc"]{color:var(--lc)}
+.chip[data-src="manual"],.chip[data-src="generic"]{color:var(--muted)}
+.chip[data-src="tracking"]{color:var(--warn)}
+
+.fields{width:100%; border-collapse:collapse; font-size:13px}
+.fields th,.fields td{text-align:left; padding:5px 0; vertical-align:top;
+                      border-bottom:1px solid var(--line)}
+.fields tr:last-child th,.fields tr:last-child td{border-bottom:0}
+.fields th{font:500 11px/1.5 "IBM Plex Mono",monospace; color:var(--faint);
+           text-transform:uppercase; width:40%; padding-right:12px}
+.fields td{font-family:"IBM Plex Mono",monospace; word-break:break-all}
+
+/* ============================================================ the verdict ===
+   The whole point of the page: one plate name, big, with the file under it. */
+.call{padding:18px 16px 16px; display:flex; flex-direction:column; gap:5px;
+      border-bottom:1px solid var(--line)}
+.call .eyebrow{font:600 10px/1 "IBM Plex Mono",monospace; letter-spacing:.15em;
+               text-transform:uppercase; color:var(--faint)}
+.call .plate{font:700 clamp(21px,3.6vw,29px)/1.1 "IBM Plex Mono",monospace;
+             letter-spacing:-.02em; word-break:break-all}
+.call .path{font:500 12px/1.4 "IBM Plex Mono",monospace; color:var(--accent);
+            word-break:break-all}
+.call .why{font-size:13px; color:var(--muted); line-height:1.5; margin-top:3px}
+.call .why b{color:var(--ink); font-weight:600}
+
+.fill{display:flex; flex-direction:column; gap:6px; padding:14px 16px;
+      border-bottom:1px solid var(--line)}
+.fillbar{height:9px; background:var(--panel-2); border:1px solid var(--line-hard);
+         border-radius:2px; overflow:hidden; display:flex}
+.fillbar i{display:block; background:var(--accent); height:100%}
+.fillbar[data-over="1"] i{background:var(--bad)}
+.filltext{display:flex; justify-content:space-between; gap:12px; font-size:12.5px;
+          color:var(--muted); font-family:"IBM Plex Mono",monospace}
+.filltext b{color:var(--ink); font-weight:600}
+
+.grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(124px,1fr)); gap:12px}
+.opt{display:flex; flex-direction:column; gap:5px; min-width:0}
+.opt label{font:600 10px/1 "IBM Plex Mono",monospace; letter-spacing:.13em;
+           text-transform:uppercase; color:var(--faint)}
+select,.num{padding:9px 8px; border:1px solid var(--line-hard); border-radius:2px;
+            background:var(--panel-2); font-size:13.5px; min-width:0; width:100%}
+select:focus,.num:focus{border-color:var(--accent); background:var(--panel)}
+.num{font-family:"IBM Plex Mono",monospace}
+
+/* ----------------------------------------------------------------- label --- */
+.line{display:grid; grid-template-columns:1fr 76px; gap:8px; align-items:center}
+.line input{padding:9px 11px; border:1px solid var(--line-hard); border-radius:2px;
+            background:var(--panel-2); font-family:"IBM Plex Mono",monospace;
+            font-size:14px; min-width:0}
+.line input:focus{border-color:var(--accent); background:var(--panel)}
+
+.stage{background:var(--stage); border-bottom:1px solid var(--line);
+       padding:26px 20px 18px; display:flex; flex-direction:column;
+       align-items:center; gap:12px; overflow-x:auto}
+#preview{display:block}
+.stagenote{font:500 10px/1 "IBM Plex Mono",monospace; letter-spacing:.13em;
+           text-transform:uppercase; color:#7C8D91; text-align:center}
+
+.metrics{display:grid; grid-template-columns:repeat(auto-fit,minmax(112px,1fr));
+         gap:1px; background:var(--line)}
+.metric{background:var(--panel); padding:10px 13px; display:flex;
+        flex-direction:column; gap:3px}
+.metric dt{font:600 10px/1 "IBM Plex Mono",monospace; letter-spacing:.13em;
+           text-transform:uppercase; color:var(--faint)}
+.metric dd{margin:0; font:600 15px/1.15 "IBM Plex Mono",monospace;
+           font-variant-numeric:tabular-nums}
+.metric[data-state="warn"] dd{color:var(--warn)}
+.metric[data-state="bad"] dd{color:var(--bad)}
+.metric[data-state="good"] dd{color:var(--good)}
+
+.verdict{padding:11px 14px; font-size:13px; border-top:1px solid var(--line);
+         line-height:1.45; color:var(--muted)}
+.verdict[data-state="warn"]{background:var(--warn-soft); color:var(--warn)}
+.verdict[data-state="bad"]{background:var(--bad-soft); color:var(--bad)}
+.verdict b{font-weight:600}
+
+.swatchrow{display:flex; gap:8px}
+.swatch{display:flex; align-items:center; gap:7px; flex:1; padding:5px 7px;
+        border:1px solid var(--line-hard); border-radius:2px; background:var(--panel-2)}
+.swatch input[type=color]{-webkit-appearance:none; appearance:none; border:0;
+  background:none; width:26px; height:22px; padding:0; cursor:pointer; flex:none}
+.swatch input[type=color]::-webkit-color-swatch{border:1px solid var(--line-hard);
+                                                border-radius:2px}
+.swatch span{font:500 11px/1 "IBM Plex Mono",monospace; color:var(--muted);
+             text-transform:uppercase}
+
+.actions{display:flex; gap:8px; flex-wrap:wrap; padding:13px 16px;
+         border-top:1px solid var(--line)}
+
+/* ----------------------------------------------------------------- queue --- */
+.qlist{display:flex; flex-direction:column; gap:1px; background:var(--line)}
+.qrow{background:var(--panel); display:flex; align-items:center; gap:12px;
+      padding:9px 16px}
+.qrow canvas{flex:none; border:1px solid var(--line); display:block}
+.qmeta{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px}
+.qmeta b{font:600 13px/1.3 "IBM Plex Mono",monospace; overflow:hidden;
+         text-overflow:ellipsis; white-space:nowrap}
+.qmeta span{font-size:11.5px; color:var(--muted)}
+.qdel{border:0; background:none; color:var(--faint); cursor:pointer; font-size:18px;
+      line-height:1; padding:3px 6px; border-radius:2px}
+.qdel:hover{color:var(--bad); background:var(--panel-2)}
+.empty{padding:24px 16px; text-align:center; color:var(--faint); font-size:13px}
+
+.toast{position:fixed; left:50%; bottom:24px;
+       transform:translateX(-50%) translateY(8px); background:var(--ink);
+       color:var(--ground); padding:11px 17px; border-radius:3px; font-size:13.5px;
+       box-shadow:0 6px 20px rgba(0,0,0,.28); opacity:0; pointer-events:none;
+       transition:opacity .16s, transform .16s; max-width:88vw; text-align:center;
+       z-index:50}
+.toast.on{opacity:1; transform:translateX(-50%) translateY(0)}
+@media (prefers-reduced-motion:reduce){ .toast{transition:none} }
+
+footer.note{margin-top:26px; padding-top:16px; border-top:1px solid var(--line);
+            color:var(--muted); font-size:13px; line-height:1.6}
+footer.note h3{font:600 11px/1 "IBM Plex Mono",monospace; letter-spacing:.15em;
+               text-transform:uppercase; color:var(--faint); margin-bottom:8px}
+footer.note p{margin:0 0 10px; max-width:74ch}
+footer.note code{font-family:"IBM Plex Mono",monospace; font-size:12px;
+                 background:var(--panel-2); padding:1px 4px; border-radius:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="brand">
+    <h1>Reel Intake Bench</h1>
+    <p>Scan a reel. Get told which magazine to print for it, and a two&#8209;colour
+       label to go in the card slot. Runs entirely in this page &mdash; no network,
+       no account, no slicer profile.</p>
+  </div>
+  <button class="themer" id="themer" type="button">Theme</button>
+</header>
+
+<section class="panel" style="margin-top:20px">
+  <div class="phead"><h2>The part</h2><div class="rule"></div>
+    <span class="chip" data-src="manual" id="srcchip"><i class="dot"></i>No code</span>
+  </div>
+  <div class="pbody">
+    <div class="scanrow">
+      <input id="scan" autocomplete="off" spellcheck="false"
+             placeholder="Scan a reel barcode, or type a part number">
+      <button class="btn" id="clear" type="button">Clear</button>
+    </div>
+    <p class="hint">A USB scanner types like a keyboard &mdash; click the field and
+      scan. DigiKey and Mouser Data&nbsp;Matrix, LCSC/JLCPCB QR, or a bare part
+      number. <code>Enter</code> queues the label and clears for the next reel.</p>
+
+    <div class="byhand">
+      <span class="orline">or enter it by hand</span>
+      <div class="grid">
+        <div class="opt"><label for="mvalue">Value</label>
+          <input class="num" id="mvalue" autocomplete="off" spellcheck="false"
+                 placeholder="10k&#8486;"></div>
+        <div class="opt"><label for="pkg">Package</label>
+          <select id="pkg"></select></div>
+        <div class="opt"><label for="qty">Quantity on the reel</label>
+          <input class="num" id="qty" inputmode="numeric" placeholder="unknown"></div>
+      </div>
+      <p class="hint">Package sets the tape width, and with the quantity it picks
+        standard or XL. Both are overridable under <b>Print this</b>.</p>
+    </div>
+    <table class="fields" id="fields" hidden><tbody></tbody></table>
+  </div>
+</section>
+
+<div class="cols">
+  <!-- =========================================================== case === -->
+  <div>
+    <section class="panel">
+      <div class="phead"><h2>Print this</h2><div class="rule"></div></div>
+      <div class="call">
+        <span class="eyebrow">Magazine</span>
+        <span class="plate" id="plateName">magazine-standard-8mm</span>
+        <span class="path" id="platePath">print/0.4mm-nozzle/magazine-standard-8mm.3mf</span>
+        <span class="why" id="plateWhy"></span>
+      </div>
+      <div class="fill">
+        <div class="fillbar" id="fillbar"><i style="width:0%"></i></div>
+        <div class="filltext">
+          <span id="fillLeft">&mdash;</span>
+          <span id="fillRight">&mdash;</span>
+        </div>
+      </div>
+      <div class="pbody">
+        <div class="grid">
+          <div class="opt"><label for="tape">Tape width</label>
+            <select id="tape">
+              <option value="8">8 mm</option><option value="12">12 mm</option>
+              <option value="16">16 mm</option></select></div>
+          <div class="opt"><label for="pitch">Part pitch</label>
+            <select id="pitch">
+              <option value="2">2 mm</option><option value="4">4 mm</option>
+              <option value="8">8 mm</option><option value="12">12 mm</option>
+              <option value="16">16 mm</option></select></div>
+          <div class="opt"><label for="carrier">Carrier</label>
+            <select id="carrier">
+              <option value="0.8">Paper 0.8 mm</option>
+              <option value="1.5">Embossed 1.5 mm</option>
+              <option value="2.2">Embossed 2.2 mm</option>
+              <option value="3.0">Embossed 3.0 mm</option></select></div>
+          <div class="opt"><label for="size">Magazine</label>
+            <select id="size">
+              <option value="auto">Auto</option>
+              <option value="standard">Standard</option>
+              <option value="xl">XL</option></select></div>
+          <div class="opt"><label for="nozzle">Nozzle</label>
+            <select id="nozzle">
+              <option value="0.4" selected>0.4 mm</option>
+              <option value="0.6">0.6 mm</option></select></div>
+        </div>
+        <p class="hint" id="railNote"></p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="phead"><h2>Label queue</h2><div class="rule"></div>
+        <select id="bed" style="width:auto;padding:4px 6px;font-size:12px">
+          <option value="350,320">H2D 350&times;320</option>
+          <option value="256,256">X1C / P1S 256&times;256</option>
+          <option value="220,220">Ender 220&times;220</option>
+        </select>
+      </div>
+      <div class="qlist" id="qlist"></div>
+      <div class="actions">
+        <button class="btn primary" id="plate" type="button" disabled>Save plate</button>
+        <button class="btn" id="wipe" type="button" disabled>Empty queue</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ========================================================== label === -->
+  <div>
+    <section class="panel">
+      <div class="phead"><h2>Label &mdash; actual size</h2><div class="rule"></div></div>
+      <div class="stage">
+        <canvas id="preview" width="10" height="10"></canvas>
+        <p class="stagenote" id="stagenote">&nbsp;</p>
+      </div>
+      <dl class="metrics">
+        <div class="metric"><dt>Card</dt><dd id="m-size">&mdash;</dd></div>
+        <div class="metric"><dt>Cap height</dt><dd id="m-cap">&mdash;</dd></div>
+        <div class="metric" id="m-stroke-w"><dt>Thinnest feature</dt>
+          <dd id="m-stroke">&mdash;</dd></div>
+        <div class="metric"><dt>Triangles</dt><dd id="m-tris">&mdash;</dd></div>
+      </dl>
+      <div class="verdict" id="verdict">&nbsp;</div>
+      <div class="pbody">
+        <div class="opt"><label for="badge">Size badge &mdash; reversed out, turned 90&deg;</label>
+          <input class="num" id="badge" autocomplete="off" spellcheck="false"
+                 placeholder="0603"></div>
+        <div class="line"><input id="l1" placeholder="Line 1" autocomplete="off"
+          spellcheck="false"><select id="s1">
+          <option value="1.5">Large</option><option value="1.15">Medium</option>
+          <option value="0.85">Small</option></select></div>
+        <div class="line"><input id="l2" placeholder="Line 2" autocomplete="off"
+          spellcheck="false"><select id="s2">
+          <option value="1.5">Large</option><option value="1.15">Medium</option>
+          <option value="0.85" selected>Small</option></select></div>
+        <div class="line"><input id="l3" placeholder="Line 3 (optional)"
+          autocomplete="off" spellcheck="false"><select id="s3">
+          <option value="1.5">Large</option><option value="1.15">Medium</option>
+          <option value="0.85" selected>Small</option></select></div>
+        <div class="grid">
+          <div class="opt"><label for="face">Typeface</label>
+            <select id="face"><option value="Archivo">Archivo</option>
+              <option value="Barlow Condensed">Barlow Condensed</option>
+              <option value="IBM Plex Mono">Plex Mono</option></select></div>
+          <div class="opt"><label for="depth">Text depth</label>
+            <select id="depth"><option value="0.4">0.4 mm</option>
+              <option value="0.6" selected>0.6 mm</option>
+              <option value="0.8">0.8 mm</option></select></div>
+          <div class="opt"><label for="orient">Prints</label>
+            <select id="orient"><option value="up" selected>Text up</option>
+              <option value="down">Text down</option></select></div>
+        </div>
+        <div class="opt"><label>Filaments</label>
+          <div class="swatchrow">
+            <span class="swatch"><input type="color" id="c1" value="#9aa0a6"><span>Card</span></span>
+            <span class="swatch"><input type="color" id="c2" value="#101010"><span>Text</span></span>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="add" type="button">Add to queue</button>
+        <button class="btn" id="one" type="button">Save this label</button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<footer class="note">
+  <h3>What it is deciding, and on what</h3>
+  <p><b>Tape width</b> comes from the package, following EIA&#8209;481: everything up
+     to 1210 and SOT&#8209;23 rides 8&nbsp;mm tape, SOIC&#8209;8 and most QFNs 12&nbsp;mm,
+     wide SOICs and 7&times;7 QFPs 16&nbsp;mm. The package itself is read out of the
+     manufacturer part number where that number carries it, which is most passives
+     and very few ICs &mdash; so check the picker before you print.</p>
+  <p><b>Standard or XL</b> is capacity against your quantity.
+     <code>π(r² − r_hub²) / (carrier × pitch)</code> with r&nbsp;29.5 standard,
+     r&nbsp;42 XL, hub 7.4&nbsp;mm. That reproduces the README's own figures
+     (801 and 1678 against its ~800 and ~1600 of 0603), which is the only reason
+     to trust it &mdash; carrier thickness is the sensitive term and it is a
+     dropdown, not a measurement.</p>
+  <p><b>The label</b> matches <code>label(width)</code> in <code>container.scad</code>
+     exactly: a 41.4&nbsp;&times;&nbsp;<span id="fn-h">12.2</span>&nbsp;&times;&nbsp;0.8&nbsp;mm
+     flange with a 39.4&nbsp;mm block on top, 3.3&nbsp;mm overall &mdash; the same
+     slot as the blanks. The file is a plain core&#8209;spec 3MF with two objects and
+     two base materials; assign them to two AMS slots on import. Lettering exists
+     only in the top <span id="fn-layers">3</span> layers, so that is the only place
+     the filament changes. <b>Text down</b> puts the lettering against the build
+     plate for a sharper colour edge, at the cost of a 1&nbsp;mm overhang where the
+     flange steps out &mdash; hidden once the card is in the slot.</p>
+</footer>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+
+/* ============================================================================
+   Card geometry, straight out of container.scad's label(width):
+       cube([40 + 2 - 0.6, width + 0.8 - 0.6, 0.8]);
+       translate([1,0,0.8]) cube([40 - 0.6, width + 0.8 - 0.6, 2.5]);
+   ========================================================================= */
+const BASE_L = 41.4, BASE_T = 0.8;
+const TOP_L  = 39.4, TOP_X  = 1.0, TOP_T = 2.5;
+const THICK  = BASE_T + TOP_T;
+const cardH  = w => w + 0.2;
+/* An 8mm card is 8.2mm tall, so every 0.1mm of margin is worth having: at 0.7
+   the badge block floated with a grey band above and below it instead of
+   reading as a full-height tab. 0.45 still leaves a wall thicker than one
+   extrusion between the pocket and the card edge, and the pocket is only
+   0.6 deep out of 3.3, so nothing structural depends on it. */
+const MARGIN = 0.45;
+const PPMM   = 40;
+
+/* Magazine pocket radii from the README's plate table, and the hub radius that
+   makes its two published capacities come out right. */
+const R_STD = 29.5, R_XL = 42.0, R_HUB = 7.4;
+const capacityOf = (r, carrier, pitch) =>
+  Math.floor(Math.PI * (r*r - R_HUB*R_HUB) / carrier / pitch);
+
+const $ = s => document.querySelector(s);
+
+/* ============================================================== packages ===
+   Tape width per EIA-481. Pitch is the usual carrier pitch for that body;
+   both are overridable because reels do vary.                              */
+const PKGS = [
+  {id:"?",        name:"— not sure —",          tape:8,  pitch:4,  carrier:0.8},
+  {id:"0201",     name:"0201",                  tape:8,  pitch:2,  carrier:0.8},
+  {id:"0402",     name:"0402",                  tape:8,  pitch:2,  carrier:0.8},
+  {id:"0603",     name:"0603",                  tape:8,  pitch:4,  carrier:0.8},
+  {id:"0805",     name:"0805",                  tape:8,  pitch:4,  carrier:0.8},
+  {id:"1206",     name:"1206",                  tape:8,  pitch:4,  carrier:0.8},
+  {id:"1210",     name:"1210",                  tape:8,  pitch:4,  carrier:0.8},
+  {id:"1812",     name:"1812",                  tape:12, pitch:4,  carrier:1.5},
+  {id:"2010",     name:"2010",                  tape:8,  pitch:4,  carrier:0.8},
+  {id:"2512",     name:"2512",                  tape:12, pitch:4,  carrier:1.5},
+  {id:"SOD-123",  name:"SOD-123 / SOD-323",     tape:8,  pitch:4,  carrier:0.8},
+  {id:"SOT-23",   name:"SOT-23 / SOT-323",      tape:8,  pitch:4,  carrier:1.5},
+  {id:"SOT-89",   name:"SOT-89",                tape:12, pitch:8,  carrier:1.5},
+  {id:"SOT-223",  name:"SOT-223",               tape:12, pitch:8,  carrier:2.2},
+  {id:"SMA",      name:"SMA / SMB diode",       tape:12, pitch:8,  carrier:2.2},
+  {id:"SMC",      name:"SMC diode",             tape:16, pitch:12, carrier:3.0},
+  {id:"SOIC-8",   name:"SOIC-8 / MSOP",         tape:12, pitch:8,  carrier:2.2},
+  {id:"SOIC-16",  name:"SOIC-14 / SOIC-16",     tape:16, pitch:12, carrier:2.2},
+  {id:"TSSOP-16", name:"TSSOP up to 16",        tape:12, pitch:8,  carrier:1.5},
+  {id:"TSSOP-28", name:"TSSOP 20-28",           tape:16, pitch:12, carrier:1.5},
+  {id:"QFN-3",    name:"QFN / DFN up to 3×3",   tape:12, pitch:8,  carrier:1.5},
+  {id:"QFN-5",    name:"QFN 4×4 to 5×5",        tape:12, pitch:12, carrier:2.2},
+  {id:"QFP-7",    name:"QFN / LQFP 6×6 to 7×7", tape:16, pitch:12, carrier:2.2},
+  {id:"ELEC",     name:"Electrolytic ≤ 6.3 mm", tape:12, pitch:8,  carrier:3.0},
+  {id:"IND-4",    name:"Inductor 4×4",          tape:12, pitch:8,  carrier:2.2},
+  {id:"IND-7",    name:"Inductor 7×7",          tape:16, pitch:12, carrier:3.0}
+];
+const pkgById = id => PKGS.find(p => p.id === id) || PKGS[0];
+
+/* ======================================================== barcode parsing ===
+   DigiKey and Mouser emit ISO/IEC 15434 in a Data Matrix; LCSC and JLCPCB use
+   a braced key:value QR. Field identifiers must be matched longest-first or
+   "1P" reads as "1"+"P" and "10K" as "1"+"0K".                             */
+const FIS = ["20Z","13Z","12Z","11Z","30P","10D","14K","11K","10K","4L","1T",
+             "1P","1K","9D","1S","P","Q","K","D","S","V","T","L"];
+const FI_NAME = {
+  P:"Distributor part", "1P":"Manufacturer part", "30P":"Manufacturer part",
+  Q:"Quantity", K:"Purchase order", "1K":"Sales order", "10K":"Invoice",
+  "11K":"Packing list", "14K":"Line item", "4L":"Country", "1T":"Lot / batch",
+  D:"Date", "9D":"Date code", "10D":"Date code", S:"Serial", "1S":"Serial",
+  V:"Supplier", T:"Lot / batch", L:"Country"
+};
+
+function parseISO15434(raw){
+  let s = raw.replace(//g,"").replace(/\{GS\}/gi,"")
+             .replace(//g,"").replace(/\{RS\}/gi,"").replace(//g,"");
+  s = s.replace(/^\s*\[\)>?\s*0?6?/,"");
+  const out = {};
+  const push = (fi,val) => { if(val && !(fi in out)) out[fi] = val.trim(); };
+  if(s.indexOf("") >= 0){
+    for(const tok of s.split("")){
+      const t = tok.trim(); if(!t) continue;
+      const fi = FIS.find(f => t.startsWith(f) && t.length > f.length);
+      if(fi) push(fi, t.slice(fi.length));
+    }
+  }else{
+    /* No separators survived - a scanner stripped them, or a clipboard did.
+       Hunting for "the next field identifier" cannot work here: P, K, T, D and
+       L all occur inside the part numbers themselves, so RNCP0603FTD1K00 gets
+       chopped at its own P and comes out as "RNC". The field ORDER is fixed
+       though, so match on structure instead.
+
+       The manufacturer part ends where the order block begins. That block is
+       K<po>1K<sales order>, and "K, optional digits, 1K, digit" does not occur
+       inside a part number - not even inside one that ends in 1K00. */
+    let m = s.match(/^P(.+?)1P(.+?)(?=K\d*1K\d)/);
+    if(!m) m = s.match(/^P(.+?)1P(.+?)(?=1?[01]?K\d|4L[A-Z]{2}|Q\d+1[123]Z)/);
+    if(m){ push("P", m[1]); push("1P", m[2]); }
+    const grab = (re, fi) => { const x = s.match(re); if(x) push(fi, x[1]); };
+    grab(/(?:^|\D)K(\d*?)1K\d/, "K");
+    grab(/1K(\d+?)(?=10K|11K|4L|Q\d)/, "1K");
+    grab(/10K(\d+?)(?=11K|4L|Q\d)/, "10K");
+    grab(/11K(\d+?)(?=4L|Q\d)/, "11K");
+    grab(/4L([A-Z]{2})/, "4L");
+    grab(/Q(\d+?)(?=1[123]Z|20Z|$)/, "Q");
+    grab(/11Z([A-Z0-9]+?)(?=12Z|13Z|20Z|$)/, "11Z");
+    grab(/12Z(\d+?)(?=13Z|20Z|$)/, "12Z");
+    grab(/13Z(\d+?)(?=20Z|$)/, "13Z");
+  }
+  return out;
+}
+
+function decodeScan(raw){
+  const text = (raw || "").trim();
+  if(!text) return {source:"manual", fields:{}, mpn:"", dpn:"", qty:""};
+
+  if(/[{,]\s*(pc|pm|qty|pbn|on)\s*:/i.test(text)){          // LCSC / JLCPCB
+    const f = {};
+    text.replace(/[{,]\s*([A-Za-z]+)\s*:\s*([^,}]*)/g,
+                 (_,k,v) => { f[k.toLowerCase()] = v.trim(); return ""; });
+    return {source:"lcsc",
+      fields:{"LCSC code":f.pc, "Manufacturer part":f.pm, "Quantity":f.qty,
+              "Order":f.on, "Pick batch":f.pbn},
+      mpn:f.pm || "", dpn:f.pc || "", qty:f.qty || ""};
+  }
+  const c = text.match(/(?:^|\/|\b)(C\d{3,9})(?:\.html|\b)/i);
+  if(c && (/lcsc|jlc/i.test(text) || /^C\d{3,9}$/i.test(text)))
+    return {source:"lcsc", fields:{"LCSC code":c[1].toUpperCase()},
+            mpn:"", dpn:c[1].toUpperCase(), qty:""};
+
+  if(/^\s*\[\)>/.test(text) || //.test(text) || /(^|)1P[A-Za-z0-9]/.test(text)){
+    const f = parseISO15434(text);
+    const dpn = f.P || "", mpn = f["1P"] || f["30P"] || "";
+    let source = "generic";
+    if(f["11Z"] || f["12Z"] || f["13Z"] || f["20Z"] || /-(ND|CT|DKR|TR)$/i.test(dpn))
+      source = "digikey";
+    else if(f["14K"] || f["11K"] || /^\d{3}-/.test(dpn)) source = "mouser";
+    const fields = {};
+    for(const k of Object.keys(f)) fields[(FI_NAME[k] || k) + " (" + k + ")"] = f[k];
+    return {source, fields, mpn, dpn, qty:f.Q || ""};
+  }
+  /* A long run of bare digits is one of the other barcodes on the reel. Older
+     DigiKey labels carry a set of 1D Code 128 strips - order, invoice, pick
+     and tracking numbers - alongside the one that actually names the part, and
+     none of the numeric ones carry part data. Say so, rather than accepting it
+     as a part number and leaving a magazine labelled 0135064000000250363561. */
+  if(/^\d{12,}$/.test(text))
+    return {source:"tracking", fields:{"Tracking barcode":text},
+            mpn:"", dpn:"", qty:"", inert:true};
+
+  return {source:"manual", fields:{"Part number":text}, mpn:text, dpn:"", qty:""};
+}
+
+/* ============================================ value / package from the MPN ===
+   Part numbers very often carry the EIA size and the value. This reads the
+   common patterns only; where it cannot tell it leaves the field empty
+   rather than inventing one.                                               */
+const EIA = /(0201|0402|0603|0805|1206|1210|1812|2010|2512)/;
+
+function decodeR(code){
+  let m;
+  // an all-zero code is a jumper, and a real part worth labelling as one
+  if(/^0+$/.test(code)) return "0Ω";
+  if((m = code.match(/^(\d)(\d)(\d)(\d)$/))){
+    const v = Number(m[1]+m[2]+m[3]) * Math.pow(10, Number(m[4]));
+    return v ? eng(v,"Ω") : "";
+  }
+  if((m = code.match(/^(\d)(\d)(\d)$/))){
+    const v = Number(m[1]+m[2]) * Math.pow(10, Number(m[3]));
+    return v ? eng(v,"Ω") : "";
+  }
+  if((m = code.match(/^(\d*)([RKM])(\d*)$/i))){
+    if(!m[1] && !m[3]) return "";        // a bare letter is not a value
+    const mult = {R:1, K:1e3, M:1e6}[m[2].toUpperCase()];
+    const v = Number((m[1] || "0") + "." + (m[3] || "0")) * mult;
+    return eng(v, "Ω");                  // 0R is a jumper, not a failure to decode
+  }
+  return "";
+}
+function decodeC(code){
+  const m = code.match(/^(\d)(\d)(\d)$/);
+  if(!m) return "";
+  const pf = Number(m[1]+m[2]) * Math.pow(10, Number(m[3]));
+  return pf ? engF(pf) : "";
+}
+function eng(v, unit){
+  if(v >= 1e6) return trim(v/1e6) + "M" + unit;
+  if(v >= 1e3) return trim(v/1e3) + "k" + unit;
+  return trim(v) + unit;
+}
+function engF(pf){
+  if(pf >= 1e6) return trim(pf/1e6) + "µF";
+  if(pf >= 1e3) return trim(pf/1e3) + "nF";
+  return trim(pf) + "pF";
+}
+const trim = n => String(Number(n.toFixed(3)));
+
+/* Standard resistance decades. A four-digit resistance code is three digits
+   of mantissa and a decade multiplier, and the mantissa is always an E-series
+   value - which makes it a good enough filter to read a resistance out of a
+   part number nobody has written a rule for. A date code, a lot number or an
+   order reference will not sit on an E96 step and be preceded by a tolerance
+   letter at the same time. */
+const E24 = [100,110,120,130,150,160,180,200,220,240,270,300,330,360,390,430,
+             470,510,560,620,680,750,820,910];
+const E96 = [100,102,105,107,110,113,115,118,121,124,127,130,133,137,140,143,
+             147,150,154,158,162,165,169,174,178,182,187,191,196,200,205,210,
+             215,221,226,232,237,243,249,255,261,267,274,280,287,294,301,309,
+             316,324,332,340,348,357,365,374,383,392,402,412,422,432,442,453,
+             464,475,487,499,511,523,536,549,562,576,590,604,619,634,649,665,
+             681,698,715,732,750,768,787,806,825,845,866,887,909,931,953,976];
+const TOL_LETTER = {F:"1%", J:"5%", G:"2%", D:"0.5%", B:"0.1%", Z:""};
+
+/* Every chip resistor part number puts the tolerance letter immediately
+   before or after the resistance code. Find that pair, check the mantissa is
+   a real E-series value, and the vendor's own naming scheme stops mattering -
+   Uniohm's 0805W8F3901T5E reads the same way as anyone else's. */
+function genericR(s){
+  const pat = /([FJGDBZ])([0-9]{3,4}|[0-9]{1,3}R[0-9]{0,2}|R[0-9]{1,3})(?![0-9])/g;
+  let m, hit = null;
+  while((m = pat.exec(s))){
+    const tol = TOL_LETTER[m[1]], code = m[2];
+    if(/^0+$/.test(code)){ hit = {value:"0Ω", tol:""}; continue; }
+    if(/R/.test(code)){ hit = {value:decodeR(code), tol}; continue; }
+    const mant = Number(code.length === 4 ? code.slice(0,3) : code.slice(0,2) + "0");
+    if(E96.indexOf(mant) >= 0 || E24.indexOf(mant) >= 0){
+      const v = decodeR(code);
+      if(v) hit = {value:v, tol};
+    }
+  }
+  /* Not every part keeps the tolerance letter next to the value. Stackpole
+     writes RNCP0603FTD1K00 - tolerance F right after the size, resistance in
+     R/K/M notation at the very end. A trailing R/K/M group is unambiguous
+     enough to read on its own: decodeR rejects a bare letter, so part numbers
+     ending in R like TPS62740DSSR fall through untouched. */
+  if(!hit){
+    const t = s.match(/(\d*[RKM]\d*)$/);
+    if(t){
+      const v = decodeR(t[1]);
+      if(v){
+        const tl = s.match(/\d{4}([FJGDBZ])/);      // 0603F...
+        hit = {value:v, tol:tl ? (TOL_LETTER[tl[1]] || "") : ""};
+      }
+    }
+  }
+  return hit;
+}
+
+/* A capacitor must never be run through the resistance scan. CC0805KRX7R9BB103
+   contains "B103", and B is the tolerance letter for 0.1% while 103 is a
+   perfectly good E-series resistance code - so the scan would read a 10nF
+   capacitor as a 10k resistor and say so with complete confidence. A
+   dielectric code or a known MLCC prefix settles which family it is first. */
+const IS_MLCC = /(X[5679][RSTUV]|C0G|NP0|Y5V|Z5U)/i;
+const MLCC_PREFIX = /^(CL|GRM|GCM|GRT|CC|CGA|UMK|LMK|EMK|TMK)/;
+
+/* MLCCs put the capacitance in a three-digit code, either just before the
+   tolerance letter or right at the end of the part number. */
+function genericC(s){
+  const TOL = {J:"5%", K:"10%", M:"20%", Z:"+80/-20%"};
+  /* The case size sits right before the tolerance letter in CC0805KRX7R..., so
+     a naive scan reads "805" then "K" and calls a 10nF part 8uF. Anything
+     overlapping the size code is the size, not a capacitance. */
+  const e = s.match(EIA);
+  const at = e ? s.indexOf(e[1]) : -1;
+  const end = at >= 0 ? at + e[1].length : -1;
+  const overlapsSize = (a,b) => at >= 0 && a < end && b > at;
+  const sizeTol = s.match(/^[A-Z]{2}[0-9]{4}([JKMZ])/);   // CC0805K...
+
+  const re = /([0-9]{3})([JKMZ])(?![0-9])/g;
+  let m;
+  while((m = re.exec(s))){
+    if(overlapsSize(m.index, m.index + 3)) continue;
+    const v = decodeC(m[1]);
+    if(v) return {value:v, tol:TOL[m[2]] || ""};
+  }
+  m = s.match(/([0-9]{3})$/);
+  if(m && !overlapsSize(s.length - 3, s.length)){
+    const v = decodeC(m[1]);
+    if(v) return {value:v, tol:sizeTol ? (TOL[sizeTol[1]] || "") : ""};
+  }
+  return null;
+}
+
+function guessPart(mpn){
+  const out = {size:"", value:"", tol:"", pkg:""};
+  if(!mpn) return out;
+  const s = mpn.toUpperCase();
+
+  const e = s.match(EIA);
+  if(e){ out.size = e[1]; out.pkg = e[1]; }
+
+  // named packages, when the part number happens to spell one out
+  const named = [
+    [/SOT[-\s]?23/, "SOT-23"], [/SOT[-\s]?89/, "SOT-89"], [/SOT[-\s]?223/, "SOT-223"],
+    [/SOD[-\s]?123|SOD[-\s]?323/, "SOD-123"], [/TSSOP[-\s]?(2[0-9]|28)/, "TSSOP-28"],
+    [/TSSOP/, "TSSOP-16"], [/SOIC[-\s]?(1[46])/, "SOIC-16"], [/SOIC|SO[-\s]?8/, "SOIC-8"],
+    [/MSOP/, "SOIC-8"], [/LQFP|TQFP/, "QFP-7"], [/QFN|DFN/, "QFN-3"],
+    [/\bSMA\b|\bSMB\b/, "SMA"], [/\bSMC\b/, "SMC"]
+  ];
+  if(!out.pkg) for(const [re,id] of named) if(re.test(s)){ out.pkg = id; break; }
+
+  // Yageo / Uniohm / Walsin chip resistors: RC0402FR-0710KL
+  let m = s.match(/^(?:RC|AC|RT|RL|MF|WR)(\d{4})([FGJDBZ])?R?-\d{2}([0-9RKM.]{2,6})L?$/);
+  if(m){
+    out.size = m[1]; out.pkg = m[1];
+    out.tol = {F:"1%",G:"2%",J:"5%",D:"0.5%",B:"0.1%"}[m[2]] || "";
+    out.value = decodeR(m[3]); return out;
+  }
+  /* Ralec / Uniroyal RS series, all over LCSC: RS-05K1001FT. The tail is
+     standard and certain - 1001 is the EIA four-digit code for 1k, F is 1%.
+     The size is read from the two digits after RS-, which follow the second
+     pair of the EIA code (03 -> 0603, 05 -> 0805). That reading is inferred
+     rather than documented here, so it lands in the picker where it is
+     visible and can be corrected before anything gets printed. */
+  m = s.match(/^RS-(\d{2})[A-Z]?([0-9R]{3,4})([FJGDBZ])/);
+  if(m){
+    const RS = {"01":"0201","02":"0402","03":"0603","05":"0805",
+                "06":"1206","10":"1210","25":"2512"};
+    const sz = RS[m[1]];
+    if(sz){ out.size = sz; out.pkg = sz; }
+    out.value = decodeR(m[2]);
+    out.tol = {F:"1%",J:"5%",G:"2%",D:"0.5%",B:"0.1%"}[m[3]] || "";
+    return out;
+  }
+  // Panasonic ERJ hides the case size in a three-character series code
+  m = s.match(/^ERJ(\d[A-Z]{2})([FJDBG])(\d{3,4})V?$/);
+  if(m){
+    const ERJ = {"1G":"0201","2R":"0402","2G":"0402","3E":"0603","3G":"0603",
+                 "6E":"0805","6G":"0805","8E":"1206","8G":"1206","14":"1210"};
+    const sz = ERJ[m[1].slice(0,2)];
+    if(sz){ out.size = sz; out.pkg = sz; }
+    out.tol = {F:"1%",J:"5%",D:"0.5%",B:"0.1%",G:"2%"}[m[2]] || "";
+    out.value = decodeR(m[3]);
+    return out;
+  }
+  // Rohm MCR / Vishay CRCW resistor tails
+  m = s.match(/^(?:ERJ|MCR|CRCW|RK73|ESR)[A-Z0-9]{0,6}?(\d{4})?[A-Z]?([0-9]{3,4}|[0-9]*[RKM][0-9]*)[FJDVX]?/);
+  if(m && m[2]){
+    const v = decodeR(m[2]);
+    if(v){ out.value = v; if(m[1]){ out.size = m[1]; out.pkg = m[1]; } return out; }
+  }
+  // Samsung CL and Murata GRM carry the case size in the series number itself
+  // rather than spelling it out, so it never matches the EIA pattern above.
+  const SERIES = {
+    CL03:"0201", CL05:"0402", CL10:"0603", CL21:"0805", CL31:"1206", CL32:"1210",
+    GRM02:"0201", GRM03:"0201", GRM15:"0402", GRM18:"0603", GRM21:"0805",
+    GRM31:"1206", GRM32:"1210", GCM15:"0402", GCM18:"0603", GCM21:"0805"
+  };
+  if(!out.size) for(const k of Object.keys(SERIES))
+    if(s.startsWith(k)){ out.size = SERIES[k]; out.pkg = SERIES[k]; break; }
+
+  // Samsung CL / Murata GRM / Yageo CC MLCCs
+  m = s.match(/(?:^|[A-Z])([0-9]{3})([JKMZ])(?=[A-Z0-9]{0,10}$)/);
+  if(m && /^(CL|GRM|GCM|CC|CGA|UMK|GRT|LMK|EMK)/.test(s)){
+    const v = decodeC(m[1]);
+    if(v){ out.value = v; out.tol = {J:"5%",K:"10%",M:"20%",Z:"+80/-20%"}[m[2]] || ""; }
+    return out;
+  }
+  // AVX / Kyocera and Walsin MLCCs lead with the size: 0603YC104KAT2A
+  m = s.match(/^(\d{4})[A-Z]{1,2}(\d{3})([JKMZ])/);
+  if(m){
+    out.size = m[1]; out.pkg = m[1];
+    out.value = decodeC(m[2]);
+    out.tol = {J:"5%",K:"10%",M:"20%",Z:"+80/-20%"}[m[3]] || "";
+  }
+  /* Nothing vendor-specific matched. Fall back to the E-series scan, which
+     covers the formats nobody has written a rule for yet. */
+  if(!out.value){
+    const g = (IS_MLCC.test(s) || MLCC_PREFIX.test(s)) ? genericC(s) : genericR(s);
+    if(g && g.value){ out.value = g.value; if(!out.tol) out.tol = g.tol; }
+  }
+  return out;
+}
+
+/* ============================================================ text layout ===
+   One layout function drives both the on-screen preview and the mesh raster,
+   so what you look at is what gets extruded.                               */
+function layout(lines, boxW, boxHFull, face, badge, nozzle){
+  const c = layout.ctx || (layout.ctx = document.createElement("canvas").getContext("2d"));
+  const out = [];
+  let x0 = 0, w = boxW;
+
+  /* Every card lays out inside the same fixed-height box, whatever tape it is
+     for, so a 10k on 8mm tape and a 10k on 16mm tape print at identical size
+     and a rail of mixed widths reads as one set. The larger cards simply carry
+     more blank above and below. The 8mm card is the smallest, so it sets the
+     size for all of them. */
+  const boxH = Math.min(boxHFull, cardH(8) - 2*MARGIN);
+  const yOff = (boxHFull - boxH) / 2;
+
+  /* The package runs up the end of the card in a solid block of the second
+     filament with the digits knocked out of it. Turned on its side it gets the
+     full height of the card to be big in, and reversed out it is the one thing
+     on the label you can pick out along a rail without reading anything. */
+  const b = (badge || "").trim();
+  if(b){
+    const bf = "Saira Extra Condensed";   // narrower glyph, so a bigger em fits
+    c.font = "700 100px '" + bf + "', sans-serif";
+    /* Four digits in one row cannot be made to print. The run they are set
+       along is the height of the card, which is fixed, so the cap height is
+       fixed with it - and at that cap the counter of a 0 comes out 0.40mm,
+       one bead, which closes to a solid blob. Nothing about the face or the
+       tracking changes that; only a bigger cap does. Splitting 0603 into two
+       rows halves the characters per row and so doubles the cap, and the
+       counter doubles with it. The band has the width to spare: it is running
+       across a 41.4mm card. */
+    /* Split on the hyphen where there is one and drop it: SOD-123 set as
+       SOD over 123 reads as the package it is, and loses a character off the
+       longer row, which is what sets the cap height for both. */
+    let rows;
+    const dash = b.indexOf("-");
+    if(b.length >= 4 && dash > 0 && dash < b.length - 1)
+      rows = [b.slice(0, dash), b.slice(dash + 1)];
+    else if(b.length >= 4)
+      rows = [b.slice(0, Math.ceil(b.length/2)), b.slice(Math.ceil(b.length/2))];
+    else rows = [b];
+    let em = 0, gaps = 0;
+    for(const r of rows){
+      em = Math.max(em, c.measureText(r).width / 100);
+      gaps = Math.max(gaps, r.length - 1);
+    }
+    /* The band is drawn the full height of whatever card it is on, but the
+       digits in it are sized off the 8mm card like everything else, so the
+       badge is the same size on all three and a taller card simply carries
+       more band above and below it. */
+    const run = cardH(8) - 1.1;
+    const TRACK = 0.07;
+    let size = run / (em + gaps*TRACK);
+    const rowGap = () => size*0.72 + 0.62;      // 0.62mm of card between rows
+    let bw = (rows.length - 1) * rowGap() + size*0.72 + 1.2;
+    const maxBw = boxW * 0.30;                  // never crowd out the value
+    if(bw > maxBw){ size *= maxBw / bw; bw = maxBw; }
+    out.push({type:"badge", rows, face:bf, size, track:TRACK * size,
+              rowGap:size*0.72 + 0.62, x:0, y:yOff, w:bw, h:boxH,
+              band:bw + 2*MARGIN, bandX:-MARGIN, bandY:-MARGIN,
+              bandW:bw + 2*MARGIN, bandH:boxHFull + 2*MARGIN});
+    x0 = bw + 0.9; w = boxW - x0;
+  }
+
+  /* The lettering gets tracking for the same reason the badge does. Set flush,
+     Archivo's own side bearings leave about 0.33mm of card standing between
+     adjacent letters at this size - under a nozzle width, so the slicer merges
+     the two pockets and the second colour bleeds from one letter into the
+     next. 0.05em of tracking costs a few per cent of size and takes the web
+     clear of the nozzle. */
+  const TEXT_TRACK = 0.05;
+  const live = lines.filter(l => l.text.trim().length);
+  const total = live.reduce((a,l) => a + l.weight, 0) || 1;
+  let y = 0;
+  for(const l of live){
+    const txt = l.text.trim();
+    const band = boxH * l.weight / total;
+    let size = band * 0.94;      // the band is the whole allowance; use it
+    c.font = "700 100px '" + face + "', sans-serif";
+    const em = c.measureText(txt).width / 100;
+    const emT = em + TEXT_TRACK * Math.max(txt.length - 1, 0);
+    if(emT * size > w) size = w / emT;
+    out.push({type:"text", text:txt, size:Math.max(size,0.4),
+              track:TEXT_TRACK * Math.max(size,0.4),
+              cx:x0 + w/2, cy:yOff + y + band/2, face});
+    y += band;
+  }
+  return out;
+}
+/* ink is the second filament. ground is the card colour for the preview, or
+   null when building the mask - there the knocked-out digits have to be
+   punched back out of the block rather than painted over it. */
+/* Centre on the ink, not on the em box. textBaseline "middle" sits at the
+   font's own middle, which for digits - no descender, ink only from the
+   baseline up to the cap - is well below their visual centre. Unrotated that
+   is a slight sag; rotated 90 degrees it reads as the badge sitting off to
+   one side of its band. Measuring the actual ascent and descent puts it
+   where the eye expects it. */
+function inkCentre(ctx, text){
+  const m = ctx.measureText(text);
+  const a = m.actualBoundingBoxAscent, d = m.actualBoundingBoxDescent;
+  return (isFinite(a) && isFinite(d)) ? (a - d) / 2 : 0;
+}
+function drawTracked(ctx, text, cx, cy, tr){
+  if(!tr){ ctx.fillText(text, cx, cy); return; }
+  const chars = text.split("");
+  const cw = chars.map(ch => ctx.measureText(ch).width);
+  let run = tr * (chars.length - 1);
+  for(const v of cw) run += v;
+  let x = cx - run/2;
+  for(let i = 0; i < chars.length; i++){
+    ctx.fillText(chars[i], x + cw[i]/2, cy);
+    x += cw[i] + tr;
+  }
+}
+function drawLayout(ctx, items, scale, ink, ground){
+  ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+  for(const it of items){
+    if(it.type === "badge"){
+      /* ground === null is the mask pass. The band is a full-height groove
+         built from its own rectangle in buildLabel, so only the digits
+         standing in it belong in the raster - drawing the block here would
+         trace a contour that runs off the edge of the card. */
+      if(ground !== null){
+        ctx.fillStyle = ink;
+        ctx.fillRect(it.bandX*scale, it.bandY*scale,
+                     it.bandW*scale, it.bandH*scale);
+      }
+      ctx.save();
+      ctx.translate((it.x + it.w/2)*scale, (it.y + it.h/2)*scale);
+      ctx.rotate(-Math.PI/2);
+      ctx.font = "700 " + (it.size*scale) + "px '" + it.face + "', sans-serif";
+      ctx.fillStyle = (ground === null) ? ink : ground;
+      const n = it.rows.length;
+      for(let i = 0; i < n; i++){
+        // rotated -90, a row offset along the rotated y runs across the card,
+        // so row 0 sits to the left and reads 06 then 03 left to right
+        const off = (i - (n-1)/2) * it.rowGap * scale;
+        drawTracked(ctx, it.rows[i], 0, off + inkCentre(ctx, it.rows[i]),
+                    (it.track || 0) * scale);
+      }
+      ctx.restore();
+    }else{
+      ctx.fillStyle = ink;
+      ctx.font = "700 " + (it.size*scale) + "px '" + it.face + "', sans-serif";
+      drawTracked(ctx, it.text, it.cx*scale, it.cy*scale + inkCentre(ctx, it.text),
+                  (it.track || 0) * scale);
+    }
+  }
+}
+
+/* ================================================================= raster ===
+   Every ink pixel contributes its boundary edges, wound so ink is on one
+   consistent side; chaining them gives loops that nest correctly for holes
+   (the counter of an "o", the bowl of an "A").                            */
+function rasterise(items, boxW, boxH){
+  const W = Math.max(1, Math.round(boxW * PPMM));
+  const H = Math.max(1, Math.round(boxH * PPMM));
+  const cv = document.createElement("canvas");
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext("2d", {willReadFrequently:true});
+  drawLayout(ctx, items, PPMM, "#000", null);
+  const d = ctx.getImageData(0,0,W,H).data;
+  const mask = new Uint8Array(W*H);
+  for(let i = 0, p = 3; i < W*H; i++, p += 4) mask[i] = d[p] > 127 ? 1 : 0;
+  return {mask, W, H};
+}
+
+function traceContours(mask, W, H){
+  const at = (x,y) => (x < 0 || y < 0 || x >= W || y >= H) ? 0 : mask[y*W + x];
+  const edges = new Map();
+  const key = (x,y) => x * 100000 + y;
+  const add = (ax,ay,bx,by) => {
+    const k = key(ax,ay); let a = edges.get(k);
+    if(!a){ a = []; edges.set(k,a); }
+    a.push([ax,ay,bx,by]);
+  };
+  for(let y = 0; y < H; y++) for(let x = 0; x < W; x++){
+    if(!mask[y*W + x]) continue;
+    if(!at(x,   y-1)) add(x,   y,   x+1, y  );
+    if(!at(x+1, y  )) add(x+1, y,   x+1, y+1);
+    if(!at(x,   y+1)) add(x+1, y+1, x,   y+1);
+    if(!at(x-1, y  )) add(x,   y+1, x,   y  );
+  }
+  // Where two loops meet at a pixel corner, always take the sharpest right
+  // turn; that keeps each loop simple instead of letting it cross itself.
+  const pick = (list, dx, dy) => {
+    let best = 0, rank = -9;
+    for(let i = 0; i < list.length; i++){
+      const ox = list[i][2] - list[i][0], oy = list[i][3] - list[i][1];
+      const cross = dx*oy - dy*ox, dot = dx*ox + dy*oy;
+      const r = cross > 0 ? 3 : (cross === 0 && dot > 0) ? 2 : (cross < 0) ? 1 : 0;
+      if(r > rank){ rank = r; best = i; }
+    }
+    return best;
+  };
+  const rings = [];
+  for(const k0 of Array.from(edges.keys())){
+    let bucket = edges.get(k0);
+    while(bucket && bucket.length){
+      let e = bucket.pop();
+      const sx = e[0], sy = e[1];
+      const ring = [[sx,sy]];
+      let guard = 0;
+      while(guard++ < 200000){
+        ring.push([e[2], e[3]]);
+        if(e[2] === sx && e[3] === sy) break;
+        const nb = edges.get(key(e[2], e[3]));
+        if(!nb || !nb.length) break;
+        const i = nb.length > 1 ? pick(nb, e[2]-e[0], e[3]-e[1]) : 0;
+        e = nb.splice(i,1)[0];
+      }
+      if(ring.length > 3) rings.push(ring);
+      bucket = edges.get(k0);
+    }
+  }
+  return rings;
+}
+
+// Douglas-Peucker: flattens the pixel staircase into straight runs, while a
+// genuine corner deviates far more than the tolerance and survives.
+function simplify(pts, tol){
+  if(pts.length < 4) return pts;
+  const t2 = tol*tol;
+  const seg = (p,a,b) => {
+    let x = a[0], y = a[1], dx = b[0]-x, dy = b[1]-y;
+    if(dx || dy){
+      const t = ((p[0]-x)*dx + (p[1]-y)*dy) / (dx*dx + dy*dy);
+      if(t > 1){ x = b[0]; y = b[1]; } else if(t > 0){ x += dx*t; y += dy*t; }
+    }
+    dx = p[0]-x; dy = p[1]-y; return dx*dx + dy*dy;
+  };
+  const keep = new Uint8Array(pts.length);
+  keep[0] = keep[pts.length-1] = 1;
+  const stack = [[0, pts.length-1]];
+  while(stack.length){
+    const fr = stack.pop(), a = fr[0], b = fr[1];
+    let max = 0, idx = -1;
+    for(let i = a+1; i < b; i++){
+      const d = seg(pts[i], pts[a], pts[b]);
+      if(d > max){ max = d; idx = i; }
+    }
+    if(max > t2 && idx > 0){ keep[idx] = 1; stack.push([a,idx],[idx,b]); }
+  }
+  const out = [];
+  for(let i = 0; i < pts.length; i++) if(keep[i]) out.push(pts[i]);
+  return out;
+}
+
+const ringArea = r => {
+  let a = 0;
+  for(let i = 0, j = r.length-1; i < r.length; j = i++)
+    a += (r[j].x - r[i].x) * (r[j].y + r[i].y);
+  return a/2;
+};
+function pointInRing(p, r){
+  let inside = false;
+  for(let i = 0, j = r.length-1; i < r.length; j = i++){
+    const a = r[i], b = r[j];
+    if((a.y > p.y) !== (b.y > p.y) &&
+       p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x) inside = !inside;
+  }
+  return inside;
+}
+
+function buildPolys(items, boxW, boxH, ox, oy){
+  const r = rasterise(items, boxW, boxH);
+  const raw = traceContours(r.mask, r.W, r.H);
+  const rings = [];
+  for(const loop of raw){
+    const s = simplify(loop, 2.2);
+    if(s.length < 4) continue;
+    const pts = s.slice(0, s.length-1).map(p => ({
+      x: ox + p[0]/PPMM,
+      y: oy + (r.H - p[1])/PPMM              // canvas y is down, model y is up
+    }));
+    if(pts.length >= 3 && Math.abs(ringArea(pts)) > 0.0008) rings.push(pts);
+  }
+  rings.sort((a,b) => Math.abs(ringArea(b)) - Math.abs(ringArea(a)));
+  const depth = rings.map(() => 0);
+  for(let i = 0; i < rings.length; i++)
+    for(let j = 0; j < i; j++)
+      if(pointInRing(rings[i][0], rings[j])) depth[i]++;
+
+  const polys = [], slot = new Map();
+  for(let i = 0; i < rings.length; i++) if(depth[i] % 2 === 0){
+    slot.set(i, polys.length);
+    polys.push([ringArea(rings[i]) < 0 ? rings[i].slice().reverse() : rings[i]]);
+  }
+  for(let i = 0; i < rings.length; i++){
+    if(depth[i] % 2 === 0) continue;
+    let host = -1, hostArea = Infinity;
+    for(let j = 0; j < rings.length; j++){
+      if(depth[j] !== depth[i]-1 || !slot.has(j)) continue;
+      if(pointInRing(rings[i][0], rings[j])){
+        const a = Math.abs(ringArea(rings[j]));
+        if(a < hostArea){ hostArea = a; host = j; }
+      }
+    }
+    if(host < 0) continue;
+    polys[slot.get(host)].push(
+      ringArea(rings[i]) > 0 ? rings[i].slice().reverse() : rings[i]);
+  }
+  return {polys, mask:r.mask, W:r.W, H:r.H};
+}
+
+/* ============================================== triangulation (with holes) ===
+   Holes are bridged into the outer ring, then the whole thing is ear-clipped.
+   Rings are small enough after simplification that O(n^2) clipping is fine. */
+function findBridge(P, ring){
+  let best = -1, bestX = Infinity;
+  for(let i = 0; i < ring.length; i++){
+    const a = ring[i], b = ring[(i+1) % ring.length];
+    if((a.y > P.y) !== (b.y > P.y)){
+      const x = a.x + (P.y - a.y) / (b.y - a.y) * (b.x - a.x);
+      if(x >= P.x && x < bestX){ bestX = x; best = a.x > b.x ? i : (i+1) % ring.length; }
+    }
+  }
+  if(best < 0) return -1;
+  // A reflex vertex inside the triangle P-(bestX,P.y)-M would make the bridge
+  // cross the outline, so prefer the one at the shallowest angle.
+  const M = ring[best];
+  const inTri = (p,a,b,c) => {
+    const s = (a.x-c.x)*(p.y-c.y) - (a.y-c.y)*(p.x-c.x);
+    const t = (b.x-a.x)*(p.y-a.y) - (b.y-a.y)*(p.x-a.x);
+    const u = (c.x-b.x)*(p.y-b.y) - (c.y-b.y)*(p.x-b.x);
+    return (s >= 0 && t >= 0 && u >= 0) || (s <= 0 && t <= 0 && u <= 0);
+  };
+  let bi = best, bestTan = Infinity;
+  for(let i = 0; i < ring.length; i++){
+    const q = ring[i];
+    if(q.x < P.x || q.x > M.x) continue;
+    if(!inTri(q, P, {x:bestX, y:P.y}, M)) continue;
+    const tan = Math.abs(P.y - q.y) / (q.x - P.x || 1e-9);
+    if(tan < bestTan){ bestTan = tan; bi = i; }
+  }
+  return bi;
+}
+function joinHoles(outer, holes){
+  let ring = outer.slice();
+  const sorted = holes.slice().sort((a,b) =>
+    Math.max.apply(null, b.map(p => p.x)) - Math.max.apply(null, a.map(p => p.x)));
+  for(const hole of sorted){
+    let hi = 0;
+    for(let i = 1; i < hole.length; i++) if(hole[i].x > hole[hi].x) hi = i;
+    const H = hole.slice(hi).concat(hole.slice(0, hi));
+    const bi = findBridge(H[0], ring);
+    if(bi < 0) continue;
+    ring = ring.slice(0, bi+1).concat(H, [H[0]], ring.slice(bi));
+  }
+  return ring;
+}
+function earclip(pts){
+  const n = pts.length, tris = [];
+  if(n < 3) return tris;
+  const V = [];
+  // Ear clipping needs the ring counter-clockwise: with a clockwise list every
+  // candidate triple is a reflex corner, no ear is ever found, and the loop
+  // bails on its guard having emitted nothing.
+  let a = 0;
+  for(let i = 0, j = n-1; i < n; j = i++) a += (pts[j].x - pts[i].x) * (pts[j].y + pts[i].y);
+  if(a > 0) for(let i = 0; i < n; i++) V.push(i);
+  else      for(let i = 0; i < n; i++) V.push(n-1-i);
+  const area2 = (A,B,C) => (B.x-A.x)*(C.y-A.y) - (B.y-A.y)*(C.x-A.x);
+  /* Strictly inside, not merely touching. Bridging a hole into the outer ring
+     leaves two copies of the bridge vertex at one position, so an inclusive
+     test finds that copy sitting on the candidate ear's own corner, rejects
+     the ear, and never finds another - the cap comes out untriangulated. */
+  const inside = (A,B,C,P) =>
+    area2(A,B,P) > 1e-9 && area2(B,C,P) > 1e-9 && area2(C,A,P) > 1e-9;
+  let nv = V.length, count = 2*nv, v = nv-1;
+  while(nv > 2){
+    /* The last three points of a simplified ring are often near-collinear, so
+       the final ear has almost no area and the test below rejects it. Emitting
+       it anyway costs a zero-area triangle and keeps the cap's boundary equal
+       to the ring, which is what closes the shell. */
+    if(nv === 3){ tris.push([V[0], V[1], V[2]]); break; }
+    if(count-- <= 0){
+      // No ear found in a whole pass. Fan the remainder: the fan's outline is
+      // still exactly the remaining ring, so the cap closes even here.
+      for(let i = 1; i < nv-1; i++) tris.push([V[0], V[i], V[i+1]]);
+      break;
+    }
+    const u = v % nv; v = (u+1) % nv;
+    const w = (v+1) % nv;
+    const A = pts[V[u]], B = pts[V[v]], C = pts[V[w]];
+    if(area2(A,B,C) > 1e-12){
+      let ok = true;
+      for(let i = 0; i < nv; i++){
+        if(i === u || i === v || i === w) continue;
+        if(inside(A,B,C, pts[V[i]])){ ok = false; break; }
+      }
+      if(ok){
+        tris.push([V[u], V[v], V[w]]);
+        V.splice(v,1); nv--; count = 2*nv;
+        v = v === 0 ? nv-1 : v-1;
+      }
+    }
+  }
+  return tris;
+}
+function triangulate(poly){
+  if(!poly.length) return {pts:[], tris:[]};
+  const pts = poly.length > 1 ? joinHoles(poly[0], poly.slice(1)) : poly[0].slice();
+  return {pts, tris:earclip(pts)};
+}
+
+/* ==================================================================== mesh ===
+   Vertices are welded on a 1e-4 mm grid, so each part comes out as a closed
+   shell rather than a triangle soup.                                       */
+function Mesh(){ this.v = []; this.t = []; this.map = new Map(); }
+Mesh.prototype.vert = function(x,y,z){
+  const k = Math.round(x*1e4) + "|" + Math.round(y*1e4) + "|" + Math.round(z*1e4);
+  let i = this.map.get(k);
+  if(i === undefined){ i = this.v.length/3; this.v.push(x,y,z); this.map.set(k,i); }
+  return i;
+};
+Mesh.prototype.tri = function(a,b,c){ if(a!==b && b!==c && a!==c) this.t.push(a,b,c); };
+Mesh.prototype.quad = function(a,b,c,d){ this.tri(a,b,c); this.tri(a,c,d); };
+Mesh.prototype.cap = function(poly, z, up){
+  const r = triangulate(poly);
+  const idx = r.pts.map(p => this.vert(p.x, p.y, z));
+  for(const t of r.tris){
+    if(up) this.tri(idx[t[0]], idx[t[1]], idx[t[2]]);
+    else   this.tri(idx[t[2]], idx[t[1]], idx[t[0]]);
+  }
+};
+Mesh.prototype.wall = function(ring, zb, zt, out){
+  for(let i = 0; i < ring.length; i++){
+    const a = ring[i], b = ring[(i+1) % ring.length];
+    const ab = this.vert(a.x,a.y,zb), bb = this.vert(b.x,b.y,zb);
+    const bt = this.vert(b.x,b.y,zt), at = this.vert(a.x,a.y,zt);
+    if(out) this.quad(ab, bb, bt, at); else this.quad(at, bt, bb, ab);
+  }
+};
+Mesh.prototype.box = function(x0,x1,y0,y1,z0,z1){
+  const V = (x,y,z) => this.vert(x,y,z);
+  const a=V(x0,y0,z0), b=V(x1,y0,z0), c=V(x1,y1,z0), d=V(x0,y1,z0);
+  const e=V(x0,y0,z1), f=V(x1,y0,z1), g=V(x1,y1,z1), h=V(x0,y1,z1);
+  this.quad(a,d,c,b); this.quad(e,f,g,h); this.quad(a,b,f,e);
+  this.quad(b,c,g,f); this.quad(c,d,h,g); this.quad(d,a,e,h);
+};
+
+/* The lid is a rectangle with one hole per letter. Bridging two dozen holes
+   into a single ring at once is exactly where ear clipping gives up, so the
+   lid is cut into vertical bands - one per letter, or one per group of
+   letters that overlap in x - and each band is capped against its own couple
+   of holes. Neighbouring bands meet on a plain vertical segment whose only
+   vertices are the two shared corners, so the caps join edge for edge. */
+function lidBands(polys, x0, x1){
+  if(!polys.length) return [{left:x0, right:x1, list:[]}];
+  const items = polys.map(p => {
+    let lo = Infinity, hi = -Infinity;
+    for(const q of p[0]){ if(q.x < lo) lo = q.x; if(q.x > hi) hi = q.x; }
+    return {p, lo, hi};
+  }).sort((a,b) => a.lo - b.lo);
+  const g = [];
+  for(const it of items){
+    const last = g[g.length-1];
+    if(last && it.lo <= last.hi + 0.02){
+      last.hi = Math.max(last.hi, it.hi); last.list.push(it.p);
+    }else g.push({lo:it.lo, hi:it.hi, list:[it.p]});
+  }
+  let cut = x0;
+  return g.map((b,i) => {
+    const right = i === g.length-1 ? x1 : (b.hi + g[i+1].lo)/2;
+    const band = {left:cut, right, list:b.list};
+    cut = right;
+    return band;
+  });
+}
+function capLid(mesh, bands, y0, y1, z){
+  for(const b of bands)
+    mesh.cap([[{x:b.left,y:y0},{x:b.right,y:y0},{x:b.right,y:y1},{x:b.left,y:y1}]]
+             .concat(b.list.map(p => p[0].slice().reverse())), z, true);
+}
+/* The outer ring has to carry a vertex at every band cut. Without them the
+   wall lays one long edge across the top of the block while the lid lays
+   several short ones along the same line, and none of them pair up. */
+function outerRing(bands, x0, x1, y0, y1){
+  const cuts = bands.slice(0,-1).map(b => b.right);
+  const r = [{x:x0,y:y0}];
+  for(const c of cuts) r.push({x:c, y:y0});
+  r.push({x:x1,y:y0}, {x:x1,y:y1});
+  for(let i = cuts.length-1; i >= 0; i--) r.push({x:cuts[i], y:y1});
+  r.push({x:x0,y:y1});
+  return r;
+}
+
+/* A solid standing between two heights: cap on top, cap underneath, and a
+   wall round every ring. poly is [outline, ...counters]. */
+function prism(mesh, poly, zb, zt){
+  mesh.cap(poly, zt, true);
+  mesh.cap(poly, zb, false);
+  for(const r of poly) mesh.wall(r, zb, zt, true);
+}
+
+function buildLabel(spec, offX, offY){
+  const H = cardH(spec.tape);
+  const p = buildPolys(spec.items, TOP_L - 2*MARGIN, H - 2*MARGIN,
+                       offX + TOP_X + MARGIN, offY + MARGIN);
+  const card = new Mesh(), text = new Mesh();
+  const zTop = THICK, zCut = THICK - spec.depth;
+
+  // The flange is its own closed solid. It and the block overlap through the
+  // first 0.8mm, which every slicer unions, and neither shell is left open.
+  card.box(offX, offX + BASE_L, offY, offY + H, 0, BASE_T);
+
+  const bx0 = offX + TOP_X, bx1 = bx0 + TOP_L, by0 = offY, by1 = offY + H;
+
+  /* The badge is a band, not a pocket: it runs the full height of the card and
+     off its end, so it has no lid above it to cut a hole in. It is built as a
+     groove instead - the block stops at zCut across the band's width, the
+     second filament fills the groove to zTop, and the digits are left standing
+     in it as pillars of card. Everything right of the band is the ordinary
+     card with the value sunk into its lid. */
+  const bi = spec.items.filter(i => i.type === "badge")[0];
+  let lidL = bx0, digits = [], value = p.polys;
+  if(bi){
+    const bandR = bx0 + bi.band;
+    const rightOf = q => {
+      let mx = -Infinity;
+      for(const v of q[0]) if(v.x > mx) mx = v.x;
+      return mx >= bandR;
+    };
+    digits = p.polys.filter(q => !rightOf(q));
+    value  = p.polys.filter(rightOf);
+
+    // block under the band, overlapping into the main block so the two closed
+    // shells share a volume rather than a coplanar face
+    card.box(bx0, bandR + 0.2, by0, by1, 0, zCut);
+
+    const rect = [{x:bx0,y:by0},{x:bandR,y:by0},{x:bandR,y:by1},{x:bx0,y:by1}];
+    // the band fill: the rectangle with each digit outline knocked out of it
+    prism(text, [rect].concat(digits.map(q => q[0].slice().reverse())), zCut, zTop);
+    for(const q of digits){
+      // a counter - the middle of a 0 or a 6 - is band material again
+      for(let i = 1; i < q.length; i++)
+        prism(text, [q[i].slice().reverse()], zCut, zTop);
+      prism(card, q, zCut, zTop);          // the digit itself, in card colour
+    }
+    lidL = bandR;
+  }
+
+  const bands = lidBands(value, lidL, bx1);
+  const outer = outerRing(bands, lidL, bx1, by0, by1);
+
+  if(!value.length){
+    card.box(lidL, bx1, by0, by1, 0, zTop);
+  }else{
+    /* One closed shell, not stacked boxes: a full underside, walls the whole
+       way up, and a lid at zTop with a blind pocket sunk under each glyph.
+       poly[0] is the glyph outline and becomes a hole in that lid; poly[1..]
+       are its counters - the middle of an "o" - which are not pocketed at all,
+       so each one stays as an island of card standing at full height. */
+    card.cap([outer], 0, false);
+    card.wall(outer, 0, zTop, true);
+    capLid(card, bands, by0, by1, zTop);
+    for(const poly of value){
+      for(let i = 1; i < poly.length; i++)
+        card.cap([poly[i].slice().reverse()], zTop, true);
+      for(const r of poly) card.wall(r, zCut, zTop, false);
+      card.cap(poly, zCut, true);
+      prism(text, poly, zCut, zTop);
+    }
+  }
+  if(spec.orient === "down"){ flipZ(card); flipZ(text); }
+  return {card, text, mask:p.mask, W:p.W, H:p.H};
+}
+function flipZ(m){
+  for(let i = 2; i < m.v.length; i += 3) m.v[i] = THICK - m.v[i];
+  for(let i = 0; i < m.t.length; i += 3){
+    const t = m.t[i]; m.t[i] = m.t[i+2]; m.t[i+2] = t;
+  }
+}
+
+/* =========================================================== print checks ===
+   A chamfer distance transform gives every ink pixel its distance to the edge
+   of its stroke. The peak inside a glyph is half that glyph's stroke width,
+   so the smallest peak across the lettering is the thinnest thing the nozzle
+   has to draw.                                                             */
+function thinnestStroke(mask, W, H){
+  const INF = 1e9, d = new Float32Array(W*H);
+  for(let i = 0; i < W*H; i++) d[i] = mask[i] ? INF : 0;
+  const D1 = 1, D2 = 1.41421356;
+  const g = (x,y) => (x < 0 || y < 0 || x >= W || y >= H) ? 0 : d[y*W+x];
+  for(let y = 0; y < H; y++) for(let x = 0; x < W; x++){
+    if(!mask[y*W+x]) continue;
+    d[y*W+x] = Math.min(d[y*W+x], g(x-1,y)+D1, g(x,y-1)+D1,
+                        g(x-1,y-1)+D2, g(x+1,y-1)+D2);
+  }
+  for(let y = H-1; y >= 0; y--) for(let x = W-1; x >= 0; x--){
+    if(!mask[y*W+x]) continue;
+    d[y*W+x] = Math.min(d[y*W+x], g(x+1,y)+D1, g(x,y+1)+D1,
+                        g(x+1,y+1)+D2, g(x-1,y+1)+D2);
+  }
+  const lab = new Int32Array(W*H).fill(-1);
+  const stack = [];
+  let best = Infinity, any = false;
+  for(let s = 0; s < W*H; s++){
+    if(!mask[s] || lab[s] >= 0) continue;
+    let peak = 0, n = 0;
+    lab[s] = s; stack.push(s);
+    while(stack.length){
+      const q = stack.pop(); n++;
+      if(d[q] > peak) peak = d[q];
+      const x = q % W, y = (q - x) / W;
+      if(x > 0   && mask[q-1] && lab[q-1] < 0){ lab[q-1] = s; stack.push(q-1); }
+      if(x < W-1 && mask[q+1] && lab[q+1] < 0){ lab[q+1] = s; stack.push(q+1); }
+      if(y > 0   && mask[q-W] && lab[q-W] < 0){ lab[q-W] = s; stack.push(q-W); }
+      if(y < H-1 && mask[q+W] && lab[q+W] < 0){ lab[q+W] = s; stack.push(q+W); }
+    }
+    if(n < 12) continue;                        // ignore specks: dots, commas
+    any = true;
+    best = Math.min(best, 2*peak/PPMM);
+  }
+  return any ? best : 0;
+}
+
+/* Two different things can be too thin to print, and only one of them is a
+   glyph. thinnestStroke measures the second filament - the strokes of the
+   lettering. This measures the card between them: where two glyphs nearly
+   touch, or a digit nearly meets the edge of its band, the material left
+   standing is a web no wider than that gap. A chamfer transform carrying the
+   nearest glyph's id turns that into one number - wherever two different
+   glyphs claim neighbouring pixels, their distances sum to the gap. */
+function minGap(mask, W, H){
+  const lab = new Int32Array(W*H);
+  let n = 0;
+  const st = [];
+  for(let s0 = 0; s0 < W*H; s0++){
+    if(!mask[s0] || lab[s0]) continue;
+    n++; lab[s0] = n; st.push(s0);
+    let size = 0;
+    while(st.length){
+      const q = st.pop(); size++;
+      const x = q % W, y = (q - x) / W;
+      if(x > 0   && mask[q-1] && !lab[q-1]){ lab[q-1] = n; st.push(q-1); }
+      if(x < W-1 && mask[q+1] && !lab[q+1]){ lab[q+1] = n; st.push(q+1); }
+      if(y > 0   && mask[q-W] && !lab[q-W]){ lab[q-W] = n; st.push(q-W); }
+      if(y < H-1 && mask[q+W] && !lab[q+W]){ lab[q+W] = n; st.push(q+W); }
+    }
+    if(size < 12) n--;                    // a speck is not a glyph
+  }
+  if(n < 2) return 0;
+  const INF = 1e9, d = new Float32Array(W*H), own = new Int32Array(W*H);
+  for(let i = 0; i < W*H; i++){
+    if(mask[i] && lab[i]){ d[i] = 0; own[i] = lab[i]; }
+    else { d[i] = INF; own[i] = 0; }
+  }
+  const D1 = 1, D2 = 1.41421356;
+  const rel = (i,j,w) => { if(d[j] + w < d[i]){ d[i] = d[j] + w; own[i] = own[j]; } };
+  for(let y = 0; y < H; y++) for(let x = 0; x < W; x++){
+    const i = y*W + x;
+    if(x > 0) rel(i, i-1, D1);
+    if(y > 0) rel(i, i-W, D1);
+    if(x > 0 && y > 0) rel(i, i-W-1, D2);
+    if(x < W-1 && y > 0) rel(i, i-W+1, D2);
+  }
+  for(let y = H-1; y >= 0; y--) for(let x = W-1; x >= 0; x--){
+    const i = y*W + x;
+    if(x < W-1) rel(i, i+1, D1);
+    if(y < H-1) rel(i, i+W, D1);
+    if(x < W-1 && y < H-1) rel(i, i+W+1, D2);
+    if(x > 0 && y < H-1) rel(i, i+W-1, D2);
+  }
+  let best = Infinity;
+  for(let y = 0; y < H; y++) for(let x = 0; x < W-1; x++){
+    const i = y*W + x;
+    if(own[i] && own[i+1] && own[i] !== own[i+1])
+      best = Math.min(best, (d[i] + d[i+1] + 1) / PPMM);
+  }
+  for(let y = 0; y < H-1; y++) for(let x = 0; x < W; x++){
+    const i = y*W + x;
+    if(own[i] && own[i+W] && own[i] !== own[i+W])
+      best = Math.min(best, (d[i] + d[i+W] + 1) / PPMM);
+  }
+  return best === Infinity ? 0 : best;
+}
+/* The third thing that can be too thin, and the one that bit hardest: the
+   counter of a 0 or a 6. It is neither a stroke nor a gap between glyphs -
+   it is a hole inside one, so the two scans above both walk straight past it.
+   Invert, label, throw away the component that reaches the border - that is
+   the open background - and every component left is an enclosed counter. */
+function minCounter(mask, W, H){
+  const inv = new Uint8Array(W*H);
+  for(let i = 0; i < W*H; i++) inv[i] = mask[i] ? 0 : 1;
+  const INF = 1e9, d = new Float32Array(W*H);
+  for(let i = 0; i < W*H; i++) d[i] = inv[i] ? INF : 0;
+  const D1 = 1, D2 = 1.41421356;
+  const g = (x,y) => (x < 0 || y < 0 || x >= W || y >= H) ? 0 : d[y*W+x];
+  for(let y = 0; y < H; y++) for(let x = 0; x < W; x++){
+    if(!inv[y*W+x]) continue;
+    d[y*W+x] = Math.min(d[y*W+x], g(x-1,y)+D1, g(x,y-1)+D1,
+                        g(x-1,y-1)+D2, g(x+1,y-1)+D2);
+  }
+  for(let y = H-1; y >= 0; y--) for(let x = W-1; x >= 0; x--){
+    if(!inv[y*W+x]) continue;
+    d[y*W+x] = Math.min(d[y*W+x], g(x+1,y)+D1, g(x,y+1)+D1,
+                        g(x+1,y+1)+D2, g(x-1,y+1)+D2);
+  }
+  const lab = new Int32Array(W*H).fill(-1), st = [];
+  let best = Infinity;
+  for(let s0 = 0; s0 < W*H; s0++){
+    if(!inv[s0] || lab[s0] >= 0) continue;
+    let peak = 0, n = 0, border = false;
+    lab[s0] = s0; st.push(s0);
+    while(st.length){
+      const q = st.pop(); n++;
+      if(d[q] > peak) peak = d[q];
+      const x = q % W, y = (q - x) / W;
+      if(x === 0 || y === 0 || x === W-1 || y === H-1) border = true;
+      if(x > 0   && inv[q-1] && lab[q-1] < 0){ lab[q-1] = s0; st.push(q-1); }
+      if(x < W-1 && inv[q+1] && lab[q+1] < 0){ lab[q+1] = s0; st.push(q+1); }
+      if(y > 0   && inv[q-W] && lab[q-W] < 0){ lab[q-W] = s0; st.push(q-W); }
+      if(y < H-1 && inv[q+W] && lab[q+W] < 0){ lab[q+W] = s0; st.push(q+W); }
+    }
+    if(border || n < 6) continue;
+    best = Math.min(best, 2*peak/PPMM);
+  }
+  return best === Infinity ? 0 : best;
+}
+/* Three ways the lettering can be too fine for the nozzle, and the label is
+   only as good as the worst of them: the strokes themselves, the card left
+   standing between two glyphs, and the counter inside one. */
+function strokeReport(mask, W, H){
+  let worst = Infinity;
+  for(const v of [thinnestStroke(mask, W, H), minGap(mask, W, H),
+                  minCounter(mask, W, H)])
+    if(v && v < worst) worst = v;
+  return worst === Infinity ? 0 : worst;
+}
+
+/* ==================================================================== 3MF ===
+   Core spec only, matching what make_3mf.py writes, so the slicer treats
+   these the same way it treats the magazine parts.                        */
+const NS_CORE = "http://schemas.microsoft.com/3dmanufacturing/core/2015/02";
+function meshXML(m){
+  const r5 = n => Math.round(n*1e5)/1e5;
+  let s = "<mesh><vertices>";
+  for(let i = 0; i < m.v.length; i += 3)
+    s += '<vertex x="' + r5(m.v[i]) + '" y="' + r5(m.v[i+1]) + '" z="' + r5(m.v[i+2]) + '"/>';
+  s += "</vertices><triangles>";
+  for(let i = 0; i < m.t.length; i += 3)
+    s += '<triangle v1="' + m.t[i] + '" v2="' + m.t[i+1] + '" v3="' + m.t[i+2] + '"/>';
+  return s + "</triangles></mesh>";
+}
+function model3mf(parts, colours){
+  const hex = c => c.replace("#","").toUpperCase().padEnd(6,"0").slice(0,6);
+  let s = '<?xml version="1.0" encoding="UTF-8"?>'
+        + '<model unit="millimeter" xml:lang="en-US" xmlns="' + NS_CORE + '">'
+        + '<resources><basematerials id="1">';
+  colours.forEach((c,i) => {
+    s += '<base name="filament' + (i+1) + '" displaycolor="#' + hex(c) + 'FF"/>';
+  });
+  s += "</basematerials>";
+  let id = 2;
+  const items = [];
+  for(const p of parts){
+    const ids = [];
+    for(const sub of p){
+      s += '<object id="' + id + '" type="model" pid="1" pindex="' + sub.material + '">'
+         + meshXML(sub.mesh) + "</object>";
+      ids.push(id); id++;
+    }
+    s += '<object id="' + id + '" type="model"><components>'
+       + ids.map(i => '<component objectid="' + i + '"/>').join("")
+       + "</components></object>";
+    items.push(id); id++;
+  }
+  s += "</resources><build>";
+  for(const i of items) s += '<item objectid="' + i + '" transform="1 0 0 0 1 0 0 0 1 0 0 0"/>';
+  return s + "</build></model>";
+}
+
+const CRC_TABLE = (function(){
+  const t = new Uint32Array(256);
+  for(let n = 0; n < 256; n++){
+    let c = n;
+    for(let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+    t[n] = c >>> 0;
+  }
+  return t;
+})();
+function crc32(buf){
+  let c = 0xFFFFFFFF;
+  for(let i = 0; i < buf.length; i++) c = CRC_TABLE[(c ^ buf[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+async function deflateRaw(bytes){
+  if(typeof CompressionStream === "undefined") return null;
+  try{
+    const cs = new CompressionStream("deflate-raw");
+    const buf = await new Response(new Blob([bytes]).stream().pipeThrough(cs)).arrayBuffer();
+    return new Uint8Array(buf);
+  }catch(e){ return null; }
+}
+async function zip(files){
+  const enc = new TextEncoder();
+  const chunks = [], central = [];
+  let offset = 0;
+  for(const f of files){
+    const nameB = enc.encode(f.name);
+    const raw = typeof f.data === "string" ? enc.encode(f.data) : f.data;
+    const crc = crc32(raw);
+    let body = await deflateRaw(raw), method = 8;
+    if(!body || body.length >= raw.length){ body = raw; method = 0; }
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true);
+    lh.setUint16(8, method, true);     lh.setUint16(12, 0x21, true);
+    lh.setUint32(14, crc, true);       lh.setUint32(18, body.length, true);
+    lh.setUint32(22, raw.length, true);lh.setUint16(26, nameB.length, true);
+    chunks.push(new Uint8Array(lh.buffer), nameB, body);
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true);
+    ch.setUint16(6, 20, true);         ch.setUint16(10, method, true);
+    ch.setUint16(14, 0x21, true);      ch.setUint32(16, crc, true);
+    ch.setUint32(20, body.length, true); ch.setUint32(24, raw.length, true);
+    ch.setUint16(28, nameB.length, true); ch.setUint32(42, offset, true);
+    central.push(new Uint8Array(ch.buffer), nameB);
+    offset += 30 + nameB.length + body.length;
+  }
+  let cSize = 0;
+  for(const c of central) cSize += c.length;
+  const eo = new DataView(new ArrayBuffer(22));
+  eo.setUint32(0, 0x06054b50, true);
+  eo.setUint16(8, files.length, true); eo.setUint16(10, files.length, true);
+  eo.setUint32(12, cSize, true);       eo.setUint32(16, offset, true);
+  return new Blob(chunks.concat(central, [new Uint8Array(eo.buffer)]), {type:"model/3mf"});
+}
+async function make3mf(parts, colours){
+  return zip([
+    {name:"[Content_Types].xml", data:
+      '<?xml version="1.0" encoding="UTF-8"?>'
+      + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+      + '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+      + '<Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/>'
+      + "</Types>"},
+    {name:"_rels/.rels", data:
+      '<?xml version="1.0" encoding="UTF-8"?>'
+      + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+      + '<Relationship Id="rel0" Target="/3D/3dmodel.model" '
+      + 'Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/>'
+      + "</Relationships>"},
+    {name:"3D/3dmodel.model", data: model3mf(parts, colours)}
+  ]);
+}
+
+/* A local copy of this page can simply download. Inside the claude.ai viewer
+   the page may not start one, so the downloads capability is used instead -
+   and its allowlist has no 3mf, so the file lands with .txt appended.      */
+async function handOff(filename, blob){
+  let dl = null;
+  if(window.claude && typeof window.claude.use === "function"){
+    try{ dl = await window.claude.use("downloads"); }catch(e){ dl = null; }
+  }
+  if(dl){
+    try{
+      await dl.save({filename: filename + ".txt", data: await blob.arrayBuffer()});
+      toast("Saved as " + filename + ".txt — drop the .txt to open it");
+    }catch(e){
+      if(!e || e.code !== "declined")
+        toast("Could not save: " + ((e && e.message) || "unavailable"));
+    }
+    return;
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 8000);
+  toast("Saved " + filename);
+}
+
+/* ==================================================================== app === */
+const el = {};
+for(const id of ["scan","fields","srcchip","l1","l2","l3","s1","s2","s3","tape",
+                 "face","depth","orient","c1","c2","preview","stagenote","verdict",
+                 "qlist","toast","bed","pkg","qty","pitch","carrier","size","nozzle",
+                 "plateName","platePath","plateWhy","fillbar","fillLeft","fillRight","badge","mvalue",
+                 "railNote"])
+  el[id] = document.getElementById(id);
+
+el.pkg.innerHTML = PKGS.map(p =>
+  '<option value="' + p.id + '">' + p.name + "</option>").join("");
+
+let queue = [];
+try{ queue = JSON.parse(localStorage.getItem("smd-labels") || "[]") || []; }
+catch(e){ queue = []; }
+const persist = () => {
+  try{ localStorage.setItem("smd-labels", JSON.stringify(queue)); }catch(e){}
+};
+
+let toastT = 0;
+function toast(msg){
+  el.toast.textContent = msg;
+  el.toast.classList.add("on");
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.toast.classList.remove("on"), 2800);
+}
+const text0 = s => String(s).trim();
+const esc = s => String(s).replace(/[&<>"]/g,
+  c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]);
+
+function currentSpec(){
+  return {
+    lines:[{text:el.l1.value, weight:Number(el.s1.value)},
+           {text:el.l2.value, weight:Number(el.s2.value)},
+           {text:el.l3.value, weight:Number(el.s3.value)}],
+    badge:el.badge.value,
+    tape:Number(el.tape.value), face:el.face.value,
+    nozzle:Number(el.nozzle.value), depth:Number(el.depth.value),
+    orient:el.orient.value
+  };
+}
+const specItems = s =>
+  layout(s.lines, TOP_L - 2*MARGIN, cardH(s.tape) - 2*MARGIN, s.face, s.badge,
+         s.nozzle);
+
+/* ---- which magazine to print */
+function recommend(){
+  const tape = Number(el.tape.value);
+  const pitch = Number(el.pitch.value);
+  const carrier = Number(el.carrier.value);
+  const noz = el.nozzle.value;
+  const qty = parseInt(String(el.qty.value).replace(/[^\d]/g,""), 10);
+  const capStd = capacityOf(R_STD, carrier, pitch);
+  const capXL  = capacityOf(R_XL,  carrier, pitch);
+
+  let size = el.size.value, why;
+  if(size === "auto"){
+    if(!isFinite(qty) || qty <= 0){ size = "standard"; why = "no quantity on the code"; }
+    else if(qty <= capStd){ size = "standard"; why = "auto"; }
+    else { size = "xl"; why = "auto"; }
+  }else why = "you picked it";
+
+  const cap = size === "xl" ? capXL : capStd;
+  const name = "magazine-" + size + "-" + tape + "mm";
+  el.plateName.textContent = name;
+  el.platePath.textContent = "print/" + noz + "mm-nozzle/" + name + ".3mf";
+
+  /* Tape width is the one thing that cannot be guessed for an IC: nothing in
+     ATSAMD21G18A-AU says TQFP-48, and quietly defaulting to 8mm would send you
+     off to print a magazine the reel does not fit. Say so instead. */
+  const unsure = el.pkg.value === "?";
+  el.plateName.parentElement.setAttribute("data-unsure", unsure ? "1" : "0");
+  const bits = [];
+  if(unsure)
+    bits.push("<b>Pick the package first</b> — this part number does not say " +
+              "what it is, so the tape width below is only a default");
+  else
+    bits.push("<b>" + tape + " mm tape</b> for " + pkgById(el.pkg.value).name);
+  if(why === "auto" && size === "xl")
+    bits.push("<b>XL</b> because " + qty.toLocaleString() +
+      " will not fit a standard's " + capStd.toLocaleString());
+  else if(why === "auto")
+    bits.push("<b>standard</b> holds " + capStd.toLocaleString() +
+      ", enough for " + qty.toLocaleString());
+  else if(why === "no quantity on the code")
+    bits.push("<b>standard</b> by default — " + why);
+  else bits.push("<b>" + (size === "xl" ? "XL" : "standard") + "</b> because " + why);
+  el.plateWhy.innerHTML = bits.join(". ") + ".";
+
+  const pct = isFinite(qty) && qty > 0 ? qty / cap : 0;
+  const over = pct > 1;
+  el.fillbar.setAttribute("data-over", over ? "1" : "0");
+  el.fillbar.firstElementChild.style.width = Math.min(100, pct*100).toFixed(1) + "%";
+  el.fillLeft.innerHTML = isFinite(qty) && qty > 0
+    ? "<b>" + qty.toLocaleString() + "</b> on the reel"
+    : "quantity unknown";
+  el.fillRight.innerHTML = "holds <b>" + cap.toLocaleString() + "</b>" +
+    (over ? " — needs " + Math.ceil(qty/cap) + " magazines" : "");
+
+  el.railNote.innerHTML = size === "xl"
+    ? "XL magazines hang on the XL rails — <span class=\"k\">print/rails/rail-xl-300mm.3mf</span>, "
+      + Math.floor(300 / (tape + 3.3)) + " per 300 mm."
+    : "Hangs on the standard rails — <span class=\"k\">print/rails/rail-300mm.3mf</span>, "
+      + Math.floor(300 / (tape + 3.3)) + " per 300 mm.";
+}
+
+/* ---- preview: the same layout at screen scale on the two chosen filaments,
+   so it reads as the finished part rather than as a mockup */
+function drawPreview(cv, s, scale, showRule){
+  const H = cardH(s.tape);
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const pad = showRule ? 15 : 0;
+  const w = BASE_L + pad, h = H + pad;
+  cv.width = Math.round(w * scale * dpr);
+  cv.height = Math.round(h * scale * dpr);
+  cv.style.width = (w * scale) + "px";
+  cv.style.height = (h * scale) + "px";
+  const g = cv.getContext("2d");
+  g.setTransform(dpr*scale, 0, 0, dpr*scale, 0, 0);
+  g.clearRect(0,0,w,h);
+  const ox = pad;
+  g.save(); g.translate(ox, 0);
+  g.fillStyle = el.c1.value;
+  g.fillRect(0, 0, BASE_L, H);
+  g.strokeStyle = "rgba(0,0,0,.32)"; g.lineWidth = 0.12;
+  g.beginPath();
+  g.moveTo(TOP_X, 0); g.lineTo(TOP_X, H);
+  g.moveTo(TOP_X + TOP_L, 0); g.lineTo(TOP_X + TOP_L, H);
+  g.stroke();
+  g.save(); g.translate(TOP_X + MARGIN, MARGIN);
+  drawLayout(g, specItems(s), 1, el.c2.value, el.c1.value);
+  g.restore();
+  g.strokeStyle = "rgba(0,0,0,.26)"; g.lineWidth = 0.1;
+  g.strokeRect(0.05, 0.05, BASE_L-0.1, H-0.1);
+  g.restore();
+  if(showRule){
+    g.strokeStyle = "#5F7276"; g.fillStyle = "#8CA0A4"; g.lineWidth = 0.09;
+    g.beginPath();
+    for(let mm = 0; mm <= Math.floor(BASE_L); mm++){
+      const len = mm % 10 === 0 ? 3.8 : mm % 5 === 0 ? 2.5 : 1.3;
+      g.moveTo(ox + mm, H + 1.5); g.lineTo(ox + mm, H + 1.5 + len);
+    }
+    g.stroke();
+    g.font = "2.5px 'IBM Plex Mono', monospace";
+    g.textAlign = "center"; g.textBaseline = "top";
+    for(let mm = 0; mm <= Math.floor(BASE_L); mm += 10)
+      g.fillText(String(mm), ox + mm, H + 6);
+    g.save(); g.translate(ox - 3, 0); g.beginPath();
+    for(let mm = 0; mm <= Math.floor(H); mm++){
+      const len = mm % 5 === 0 ? 2.4 : 1.3;
+      g.moveTo(0, mm); g.lineTo(-len, mm);
+    }
+    g.stroke(); g.restore();
+  }
+}
+
+let meshTimer = 0;
+function refresh(){
+  const s = currentSpec();
+  const H = cardH(s.tape);
+  document.getElementById("m-size").textContent = "41.4×" + H.toFixed(1);
+  document.getElementById("fn-h").textContent = H.toFixed(1);
+  document.getElementById("fn-layers").textContent =
+    String(Math.round(s.depth / (s.nozzle === 0.4 ? 0.2 : 0.3)));
+  recommend();
+  drawPreview(el.preview, s, 9.0, true);
+  const items = specItems(s);
+  document.getElementById("m-cap").textContent = items.length
+    ? (Math.max.apply(null, items.map(i => i.size)) * 0.72).toFixed(1) + " mm" : "—";
+  const lines = items.filter(i => i.type === "text").length;   // not the badge
+  const bdg = items.length > lines;
+  el.stagenote.textContent = items.length
+    ? "shown at actual size · " + (lines ? lines + (lines === 1 ? " line" : " lines") : "")
+      + (lines && bdg ? " · " : "") + (bdg ? "size band" : "")
+    : "type a value, or scan a code";
+  clearTimeout(meshTimer);
+  meshTimer = setTimeout(() => buildAndScore(s), 220);
+}
+
+function setVerdict(state, html){
+  if(state) el.verdict.setAttribute("data-state", state);
+  else el.verdict.removeAttribute("data-state");
+  el.verdict.innerHTML = html || "&nbsp;";
+}
+function buildAndScore(s){
+  const items = specItems(s);
+  const strokeCell = document.getElementById("m-stroke-w");
+  if(!items.length){
+    document.getElementById("m-stroke").textContent = "—";
+    document.getElementById("m-tris").textContent = "—";
+    strokeCell.removeAttribute("data-state");
+    setVerdict(null, "Nothing on the card yet.");
+    return;
+  }
+  let out;
+  try{ out = buildLabel(Object.assign({}, s, {items}), 0, 0); }
+  catch(e){ setVerdict("bad", "Could not build the mesh for this text."); return; }
+  document.getElementById("m-tris").textContent =
+    ((out.card.t.length + out.text.t.length)/3).toLocaleString();
+  const stroke = strokeReport(out.mask, out.W, out.H);
+  const need = s.nozzle;
+  document.getElementById("m-stroke").textContent =
+    stroke ? stroke.toFixed(2) + " mm" : "—";
+  if(!stroke){ strokeCell.removeAttribute("data-state"); setVerdict(null, ""); }
+  else if(stroke < need){
+    strokeCell.setAttribute("data-state","bad");
+    setVerdict("bad", "<b>Thinner than the nozzle.</b> At " + stroke.toFixed(2) +
+      " mm a " + need.toFixed(1) + " mm nozzle cannot draw these strokes — " +
+      "letters will come out broken. Shorten the text, drop a line, or go up a tape width.");
+  }else if(stroke < need * 1.25){
+    strokeCell.setAttribute("data-state","warn");
+    setVerdict("warn", "<b>One bead wide.</b> " + stroke.toFixed(2) +
+      " mm strokes are a single extrusion on a " + need.toFixed(1) +
+      " mm nozzle. It prints, but the colour edge will be ragged.");
+  }else{
+    strokeCell.setAttribute("data-state","good");
+    setVerdict(null, "Strokes are " + stroke.toFixed(2) + " mm — " +
+      (stroke/need).toFixed(1) + " nozzle widths. This will print cleanly.");
+  }
+}
+
+/* ---- scanning */
+function applyScan(raw){
+  const r = decodeScan(raw);
+  el.srcchip.setAttribute("data-src", r.source);
+  el.srcchip.innerHTML = '<i class="dot"></i>' +
+    ({digikey:"DigiKey", mouser:"Mouser", lcsc:"LCSC / JLC",
+      generic:"2D barcode", manual:"Typed", tracking:"No part data"})[r.source];
+
+  /* Nothing to fill in from this one, and nothing to overwrite either - the
+     label already on screen is likely the reel the user actually wants. */
+  if(r.inert){
+    el.fields.hidden = false;
+    el.fields.querySelector("tbody").innerHTML =
+      "<tr><th>Tracking barcode</th><td>" + esc(text0(raw)) + "</td></tr>" +
+      "<tr><th>What to scan</th><td>This strip carries no part data. Use the "
+      + "Data Matrix square (DigiKey, Mouser) or the QR (LCSC) on the same "
+      + "label, or type the part number.</td></tr>";
+    return;
+  }
+
+  const g = guessPart(r.mpn || r.dpn);
+  const rows = Object.entries(r.fields).filter(kv => kv[1] && String(kv[1]).length);
+  if(g.value) rows.push(["Value (decoded)", g.value + (g.tol ? " ±" + g.tol : "")]);
+  if(g.pkg)   rows.push(["Package (decoded)", g.pkg]);
+  el.fields.hidden = !rows.length;
+  el.fields.querySelector("tbody").innerHTML = rows.map(kv =>
+    "<tr><th>" + esc(kv[0]) + "</th><td>" + esc(kv[1]) + "</td></tr>").join("");
+
+  if(r.qty) el.qty.value = r.qty;
+  if(g.pkg && PKGS.some(p => p.id === g.pkg)){
+    el.pkg.value = g.pkg;
+    applyPackage();
+  }
+  /* A resistor or a capacitor is identified by its value, not by whose reel it
+     came off: RC0603FR-0710KL tells you nothing at the bench that "10kΩ" does
+     not, and it costs the line that would have carried the value. So when the
+     value decodes, that is the label and the part number is dropped. When it
+     does not - an IC, a regulator, anything with no generic equivalent - the
+     part number IS the identity and leads.
+     Quantity is deliberately absent: it is wrong the moment you use one, and
+     it does its real work over on the capacity bar instead. */
+  /* An 8mm card is 8.2mm tall. Split that into two lines and the second one
+     lands near 1.3mm cap height with strokes under half a nozzle width - it
+     would print as broken letters. One line gets the whole card instead, so
+     the value is legible along a loaded rail. 12 and 16mm have the room. */
+  /* The package goes in the reversed-out block on the end, which frees the
+     whole rest of the card for the value. Tolerance is left off: it is the
+     least useful thing on the card at the moment you are reaching for a
+     part, and every character it costs comes out of the value's size. It is
+     shown in the scan table above, and the line is there to type it into. */
+  el.badge.value = g.size || g.pkg || "";
+  if(g.value){
+    el.l1.value = g.value;
+    el.l2.value = "";
+  }else{
+    el.l1.value = r.mpn || r.dpn || raw.trim();
+    el.l2.value = "";
+    if(!el.badge.value && g.pkg) el.badge.value = g.pkg;
+  }
+  /* Two lines, and the first one big. These are read along a loaded rail at
+     arm's length, so one glanceable value beats three lines of complete data
+     you have to pick the magazine up to read. The distributor code is left
+     off for the same reason: for a commodity part the value and the package
+     are the whole specification, and anything else is a lookup away. */
+  el.l3.value = "";
+  el.s1.value = "1.5";
+  el.s2.value = "0.85";
+  el.mvalue.value = el.l1.value;
+  refresh();
+}
+function applyPackage(){
+  const p = pkgById(el.pkg.value);
+  if(p.id === "?") return;
+  el.tape.value = String(p.tape);
+  el.pitch.value = String(p.pitch);
+  el.carrier.value = String(p.carrier);
+  // picking a package by hand should put it on the label, same as a scan does
+  if(!el.badge.value.trim() || PKGS.some(q => q.id === el.badge.value.trim()))
+    el.badge.value = p.id;
+}
+
+/* ---- queue */
+function renderQueue(){
+  document.getElementById("plate").disabled = !queue.length;
+  document.getElementById("wipe").disabled = !queue.length;
+  if(!queue.length){
+    el.qlist.innerHTML = '<p class="empty">Nothing queued. Scan a reel and press ' +
+      "Enter, or use Add to queue.</p>";
+    return;
+  }
+  el.qlist.innerHTML = "";
+  queue.forEach((s, i) => {
+    const row = document.createElement("div");
+    row.className = "qrow";
+    const cv = document.createElement("canvas");
+    drawPreview(cv, s, 2.4, false);
+    const meta = document.createElement("div");
+    meta.className = "qmeta";
+    const txt = s.lines.filter(l => l.text.trim()).map(l => l.text.trim());
+    meta.innerHTML = "<b>" + esc(txt[0] || "(blank)") + "</b><span>" +
+      esc(txt.slice(1).join("  ·  ") || "—") + "  ·  " + s.tape + " mm</span>";
+    const del = document.createElement("button");
+    del.className = "qdel"; del.type = "button";
+    del.setAttribute("aria-label", "Remove label " + (i+1));
+    del.textContent = "×";
+    del.onclick = () => { queue.splice(i,1); persist(); renderQueue(); };
+    row.append(cv, meta, del);
+    el.qlist.appendChild(row);
+  });
+}
+function merge(dst, src){
+  const base = dst.v.length/3;
+  for(let i = 0; i < src.v.length; i++) dst.v.push(src.v[i]);
+  for(let i = 0; i < src.t.length; i++) dst.t.push(src.t[i] + base);
+}
+async function saveLabels(list, filename){
+  if(!list.length) return;
+  const bed = el.bed.value.split(",").map(Number);
+  const gap = 4, pad = 5, colW = BASE_L + gap;
+  const cols = Math.max(1, Math.floor((bed[0] - 2*pad + gap) / colW));
+  const cardMesh = new Mesh(), textMesh = new Mesh();
+  let x = pad, y = pad, rowH = 0, placed = 0, dropped = 0;
+  for(const s of list){
+    const H = cardH(s.tape);
+    if(placed && placed % cols === 0){ x = pad; y += rowH + gap; rowH = 0; }
+    if(y + H > bed[1] - pad){ dropped++; continue; }
+    const items = specItems(s);
+    if(!items.length){ dropped++; continue; }
+    const built = buildLabel(Object.assign({}, s, {items}), x, y);
+    merge(cardMesh, built.card); merge(textMesh, built.text);
+    rowH = Math.max(rowH, H); x += colW; placed++;
+  }
+  if(!placed){ toast("Nothing fits on the bed."); return; }
+  const blob = await make3mf(
+    [[{mesh:cardMesh, material:0}, {mesh:textMesh, material:1}]],
+    [el.c1.value, el.c2.value]);
+  await handOff(filename, blob);
+  if(dropped) toast(dropped + " label" + (dropped>1?"s":"") + " did not fit the bed");
+}
+const slug = s => ((s.lines.find(l => l.text.trim()) || {text:"label"}).text
+  .trim().replace(/[^A-Za-z0-9.+-]+/g,"-").replace(/^-|-$/g,"").slice(0,40) || "label");
+
+/* ---- wiring */
+for(const id of ["l1","l2","l3","s1","s2","s3","tape","face","depth","orient",
+                 "c1","c2","qty","pitch","carrier","size","nozzle","badge"])
+  el[id].addEventListener("input", refresh);
+
+/* The by-hand value box and the label's first line are the same field seen
+   from two places - one is where you enter a part, the other is where you
+   fine-tune what gets printed - so they track each other rather than
+   competing. */
+el.mvalue.addEventListener("input", () => { el.l1.value = el.mvalue.value; refresh(); });
+el.l1.addEventListener("input", () => { el.mvalue.value = el.l1.value; });
+el.pkg.addEventListener("input", () => { applyPackage(); refresh(); });
+
+el.scan.addEventListener("input", () => {
+  if(el.scan.value.trim().length > 2) applyScan(el.scan.value);
+});
+el.scan.addEventListener("keydown", e => {
+  if(e.key !== "Enter") return;
+  e.preventDefault();
+  applyScan(el.scan.value);
+  setTimeout(() => { addToQueue(); el.scan.value = ""; el.scan.focus(); }, 40);
+});
+document.getElementById("clear").onclick = () => {
+  el.scan.value = ""; el.fields.hidden = true; el.qty.value = "";
+  el.srcchip.setAttribute("data-src","manual");
+  el.srcchip.innerHTML = '<i class="dot"></i>No code';
+  el.l1.value = el.l2.value = el.l3.value = "";
+  el.mvalue.value = ""; el.badge.value = "";
+  el.pkg.value = "?";
+  refresh(); el.scan.focus();
+};
+function addToQueue(){
+  const s = currentSpec();
+  if(!s.lines.some(l => l.text.trim())){ toast("Put something on the label first"); return; }
+  queue.push(s); persist(); renderQueue();
+  toast("Queued — " + queue.length + " label" + (queue.length>1?"s":""));
+}
+document.getElementById("add").onclick = addToQueue;
+document.getElementById("one").onclick = () => {
+  const s = currentSpec();
+  if(!s.lines.some(l => l.text.trim())){ toast("Put something on the label first"); return; }
+  saveLabels([s], slug(s) + "-" + s.tape + "mm.3mf");
+};
+document.getElementById("plate").onclick =
+  () => saveLabels(queue, "labels-" + queue.length + "-up.3mf");
+document.getElementById("wipe").onclick = () => {
+  queue = []; persist(); renderQueue(); toast("Queue emptied");
+};
+document.getElementById("themer").onclick = () => {
+  const now = document.documentElement.getAttribute("data-theme");
+  const dark = now ? now === "dark"
+                   : matchMedia("(prefers-color-scheme: dark)").matches;
+  document.documentElement.setAttribute("data-theme", dark ? "light" : "dark");
+  refresh(); renderQueue();
+};
+
+/* Every part-number rule in this file was written because a real reel came
+   through and decoded wrong, or not at all - and two of them were only caught
+   because a neighbouring case broke at the same time. Open the page with
+   ?selftest to re-run the lot; it prints a table and nothing else changes. */
+const DECODE_TESTS = [
+  ["0805W8F3901T5E","3.9kΩ","0805"], ["0603WAF1001T5E","1kΩ","0603"],
+  ["0402WGF1002TCE","10kΩ","0402"],  ["1206W4F1003T5E","100kΩ","1206"],
+  ["0805W8J0000T5E","0Ω","0805"],
+  ["CC0805KRX7R9BB103","10nF","0805"], ["CC0603KRX7R7BB104","100nF","0603"],
+  ["CC0402KRX5R5BB105","1µF","0402"],
+  ["RS-05K1001FT","1kΩ","0805"],  ["RS-05K4R70FT","4.7Ω","0805"],
+  ["RS-03K0000ZT","0Ω","0603"],   ["RC0603FR-0710KL","10kΩ","0603"],
+  ["RC0402JR-070RL","0Ω","0402"], ["ERJ3EKF1002V","10kΩ","0603"],
+  ["CL10B104KB8NNNC","100nF","0603"], ["GRM188R71H104KA93D","100nF","0603"],
+  ["0603YC104KAT2A","100nF","0603"],  ["CRCW060310K0FKEA","10kΩ","0603"],
+  ["GRM21BR61E475KA12L","4.7µF","0805"],
+  ["RNCP0603FTD1K00","1kΩ","0603"], ["RNCP0805FTD4K99","4.99kΩ","0805"],
+  ["RNCP1206FTD10R0","10Ω","1206"],
+  // these carry no value or package in the part number, and must stay blank
+  // rather than being guessed at
+  ["ATSAMD21G18A-AU","",""], ["1N4148W","",""], ["AO3400A","",""],
+  ["TPS62740DSSR","",""],    ["2N7002","",""],  ["SS34","",""]
+];
+function selfTest(){
+  const rows = DECODE_TESTS.map(t => {
+    const g = guessPart(t[0]);
+    return {mpn:t[0], value:g.value || "—", package:g.pkg || "—",
+            ok:(g.value||"") === t[1] && (g.pkg||"") === t[2] ? "pass" : "FAIL",
+            expected:(g.value||"") === t[1] && (g.pkg||"") === t[2]
+                     ? "" : (t[1]||"—") + " / " + (t[2]||"—")};
+  });
+  const bad = rows.filter(r => r.ok === "FAIL").length;
+  console.log("part number decoding: " + (rows.length - bad) + "/" + rows.length
+              + (bad ? "  — " + bad + " FAILED" : "  all pass"));
+  console.table(rows);
+  return bad;
+}
+if(location.search.indexOf("selftest") >= 0){
+  // this script is at the end of the body, so DOMContentLoaded may already
+  // have fired by the time the listener would be added
+  if(document.readyState === "loading")
+    document.addEventListener("DOMContentLoaded", selfTest);
+  else selfTest();
+}
+
+/* Canvas takes its font from the document, so nothing may be rasterised
+   before the webfonts arrive - otherwise the mesh is extruded from the
+   fallback face. */
+(async function(){
+  renderQueue(); refresh();
+  try{
+    await Promise.all(["Archivo","Barlow Condensed","IBM Plex Mono",
+                       "Saira Extra Condensed"]
+      .map(f => document.fonts.load("700 40px '" + f + "'")));
+    await document.fonts.ready;
+  }catch(e){}
+  refresh(); renderQueue();
+  el.scan.focus();
+})();
+</script>
+</body>
+</html>

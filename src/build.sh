@@ -75,7 +75,12 @@ magazine() {
 }
 
 STD_OPTS=""
-XL_OPTS="-D grow_x=12.5 -D grow_y=12.5 -D window_d=22 -D badge_note=\\\"XL\\\""
+# XL reinforcement. Two of the four built this session are enabled:
+#   arm_tip_fill    tab tip 2.51 -> 4.04mm, removes the snap risk
+#   arm_root_carry  the 1.48mm web tie -> 2.71mm
+# The other two - back_wall_add and weld_arm_web - are in container.scad and
+# default to 0; add -D back_wall_add=1.6 or -D weld_arm_web=1 to turn them on.
+XL_OPTS="-D grow_x=12.5 -D grow_y=12.5 -D window_d=22 -D arm_tip_fill=1 -D arm_root_carry=1.5 -D root_blend=1 -D badge_note=\\\"XL\\\""
 
 for noz in $NOZZLES; do
     for w in 8 12 16; do

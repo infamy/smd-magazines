@@ -1,1 +1,14 @@
 .DS_Store
+**/.DS_Store
+__pycache__/
+*.pyc
+
+# patch/sed backups
+*.orig
+*.rej
+*.bak
+
+# Superseded scripts and outputs, kept on disk while this tree had no usable
+# history. Git now serves that purpose - delete magazine/archive/ once you are
+# satisfied nothing in it is still wanted.
+archive/
