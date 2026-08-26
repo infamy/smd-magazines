@@ -556,6 +556,8 @@ const EIA = /(0201|0402|0603|0805|1206|1210|1812|2010|2512)/;
 
 function decodeR(code){
   let m;
+  // an all-zero code is a jumper, and a real part worth labelling as one
+  if(/^0+$/.test(code)) return "0Ω";
   if((m = code.match(/^(\d)(\d)(\d)(\d)$/))){
     const v = Number(m[1]+m[2]+m[3]) * Math.pow(10, Number(m[4]));
     return v ? eng(v,"Ω") : "";
@@ -565,9 +567,10 @@ function decodeR(code){
     return v ? eng(v,"Ω") : "";
   }
   if((m = code.match(/^(\d*)([RKM])(\d*)$/i))){
+    if(!m[1] && !m[3]) return "";        // a bare letter is not a value
     const mult = {R:1, K:1e3, M:1e6}[m[2].toUpperCase()];
     const v = Number((m[1] || "0") + "." + (m[3] || "0")) * mult;
-    return v ? eng(v,"Ω") : "";
+    return eng(v, "Ω");                  // 0R is a jumper, not a failure to decode
   }
   return "";
 }
@@ -608,11 +611,27 @@ function guessPart(mpn){
   if(!out.pkg) for(const [re,id] of named) if(re.test(s)){ out.pkg = id; break; }
 
   // Yageo / Uniohm / Walsin chip resistors: RC0402FR-0710KL
-  let m = s.match(/^(?:RC|AC|RT|RL|MF|WR)(\d{4})([FGJDB])?R?-\d{2}([0-9RKM.]{2,6})L?$/);
+  let m = s.match(/^(?:RC|AC|RT|RL|MF|WR)(\d{4})([FGJDBZ])?R?-\d{2}([0-9RKM.]{2,6})L?$/);
   if(m){
     out.size = m[1]; out.pkg = m[1];
     out.tol = {F:"1%",G:"2%",J:"5%",D:"0.5%",B:"0.1%"}[m[2]] || "";
     out.value = decodeR(m[3]); return out;
+  }
+  /* Ralec / Uniroyal RS series, all over LCSC: RS-05K1001FT. The tail is
+     standard and certain - 1001 is the EIA four-digit code for 1k, F is 1%.
+     The size is read from the two digits after RS-, which follow the second
+     pair of the EIA code (03 -> 0603, 05 -> 0805). That reading is inferred
+     rather than documented here, so it lands in the picker where it is
+     visible and can be corrected before anything gets printed. */
+  m = s.match(/^RS-(\d{2})[A-Z]?([0-9R]{3,4})([FJGDBZ])/);
+  if(m){
+    const RS = {"01":"0201","02":"0402","03":"0603","05":"0805",
+                "06":"1206","10":"1210","25":"2512"};
+    const sz = RS[m[1]];
+    if(sz){ out.size = sz; out.pkg = sz; }
+    out.value = decodeR(m[2]);
+    out.tol = {F:"1%",J:"5%",G:"2%",D:"0.5%",B:"0.1%"}[m[3]] || "";
+    return out;
   }
   // Panasonic ERJ hides the case size in a three-character series code
   m = s.match(/^ERJ(\d[A-Z]{2})([FJDBG])(\d{3,4})V?$/);
