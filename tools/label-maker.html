@@ -661,10 +661,18 @@ function guessPart(mpn){
 /* ============================================================ text layout ===
    One layout function drives both the on-screen preview and the mesh raster,
    so what you look at is what gets extruded.                               */
-function layout(lines, boxW, boxH, face, badge, nozzle){
+function layout(lines, boxW, boxHFull, face, badge, nozzle){
   const c = layout.ctx || (layout.ctx = document.createElement("canvas").getContext("2d"));
   const out = [];
   let x0 = 0, w = boxW;
+
+  /* Every card lays out inside the same fixed-height box, whatever tape it is
+     for, so a 10k on 8mm tape and a 10k on 16mm tape print at identical size
+     and a rail of mixed widths reads as one set. The larger cards simply carry
+     more blank above and below. The 8mm card is the smallest, so it sets the
+     size for all of them. */
+  const boxH = Math.min(boxHFull, cardH(8) - 2*MARGIN);
+  const yOff = (boxHFull - boxH) / 2;
 
   /* The package runs up the end of the card in a solid block of the second
      filament with the digits knocked out of it. Turned on its side it gets the
@@ -682,7 +690,7 @@ function layout(lines, boxW, boxH, face, badge, nozzle){
        emboldening - the balanced point is already the best available. The
        only real lever is a narrower face, which raises the em for the same
        run of card height and thickens both sides together. */
-    out.push({type:"badge", text:b, face:bf, size, x:0, y:0, w:bw, h:boxH,
+    out.push({type:"badge", text:b, face:bf, size, x:0, y:yOff, w:bw, h:boxH,
               embolden:0});
     x0 = bw + 0.9; w = boxW - x0;
   }
@@ -697,7 +705,7 @@ function layout(lines, boxW, boxH, face, badge, nozzle){
     const w100 = c.measureText(l.text.trim()).width;
     if(w100 * size / 100 > w) size = w * 100 / w100;
     out.push({type:"text", text:l.text.trim(), size:Math.max(size,0.4),
-              cx:x0 + w/2, cy:y + band/2, face});
+              cx:x0 + w/2, cy:yOff + y + band/2, face});
     y += band;
   }
   return out;
@@ -1573,15 +1581,13 @@ function applyScan(raw){
      would print as broken letters. One line gets the whole card instead, so
      the value is legible along a loaded rail. 12 and 16mm have the room. */
   /* The package goes in the reversed-out block on the end, which frees the
-     whole rest of the card for the value. Tolerance goes back to its EIA
-     letter: "1%" costs a per-cent sign - two counters and a hairline slash,
-     the worst shape on the card - where "F" is three strokes and says the
-     same thing to anyone who reads a reel. */
+     whole rest of the card for the value. Tolerance is left off: it is the
+     least useful thing on the card at the moment you are reaching for a
+     part, and every character it costs comes out of the value's size. It is
+     shown in the scan table above, and the line is there to type it into. */
   el.badge.value = g.size || g.pkg || "";
-  const tolLetter = {"0.1%":"B","0.25%":"C","0.5%":"D","1%":"F","2%":"G",
-                     "5%":"J","10%":"K","20%":"M"}[g.tol] || "";
   if(g.value){
-    el.l1.value = (g.value + (tolLetter ? "  " + tolLetter : "")).trim();
+    el.l1.value = g.value;
     el.l2.value = "";
   }else{
     el.l1.value = r.mpn || r.dpn || raw.trim();
