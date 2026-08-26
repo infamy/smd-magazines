@@ -2,6 +2,7 @@
 # ready-to-print files are attached to GitHub Releases instead of being
 # carried in the tree.
 /stl/
+/release/
 /print/
 
 # OpenSCAD leaves these beside a failed part

@@ -35,6 +35,13 @@ magazine-standard-8mm magazine-standard-12mm magazine-standard-16mm
 magazine-xl-8mm magazine-xl-12mm magazine-xl-16mm
 rail-100mm rail-300mm rail-xl-100mm rail-xl-300mm"
 
+# --release builds the lot, then flattens print/ into release/ under the names
+# the GitHub release assets use. Release assets are a flat list, so the nozzle
+# folder has to become part of the filename; docs/index.html builds its download
+# links from the same rule, so the two cannot drift apart.
+RELEASE=0
+if [ "${1:-}" = "--release" ]; then RELEASE=1; shift; fi
+
 WANT=${1:-all}
 case " $(echo $VARIANTS) " in
     *" $WANT "*) ;;
@@ -129,3 +136,19 @@ rail 300 12.5 "-xl"
 echo
 echo "Done. Load anything from $PRINT"
 find "$PRINT" -name '*.3mf' | sed "s|$PRINT/|  |" | sort
+
+if [ "$RELEASE" = "1" ]; then
+    REL="$ROOT/release"
+    rm -rf "$REL"; mkdir -p "$REL"
+    for f in "$PRINT"/*mm-nozzle/*.3mf; do
+        [ -e "$f" ] || continue
+        noz=$(basename "$(dirname "$f")")          # e.g. 0.4mm-nozzle
+        cp "$f" "$REL/$(basename "$f" .3mf)-$noz.3mf"
+    done
+    for f in "$PRINT"/rails/*.3mf; do              # rails suit either nozzle
+        [ -e "$f" ] && cp "$f" "$REL/$(basename "$f")"
+    done
+    echo
+    echo "Release assets in $REL"
+    ls -1 "$REL" | sed 's/^/  /'
+fi

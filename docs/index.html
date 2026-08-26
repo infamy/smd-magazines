@@ -135,6 +135,12 @@ header.top{display:flex; flex-wrap:wrap; align-items:flex-end; gap:18px;
              letter-spacing:-.02em; word-break:break-all}
 .call .path{font:500 12px/1.4 "IBM Plex Mono",monospace; color:var(--accent);
             word-break:break-all}
+.call .path a{color:inherit; text-decoration:underline; text-underline-offset:2px}
+.call .path a:hover{filter:brightness(1.15)}
+#railNote a{color:var(--accent); font-family:"IBM Plex Mono",monospace;
+            font-size:12px; text-decoration:underline; text-underline-offset:2px}
+a.themer{text-decoration:none; display:inline-block}
+footer.note a{color:var(--accent)}
 .call .why{font-size:13px; color:var(--muted); line-height:1.5; margin-top:3px}
 .call .why b{color:var(--ink); font-weight:600}
 
@@ -244,6 +250,7 @@ footer.note code{font-family:"IBM Plex Mono",monospace; font-size:12px;
        label to go in the card slot. Runs entirely in this page &mdash; no network,
        no account, no slicer profile.</p>
   </div>
+  <a class="themer" id="projlink" href="#" hidden>Magazines &amp; rails &rarr;</a>
   <button class="themer" id="themer" type="button">Theme</button>
 </header>
 
@@ -407,6 +414,10 @@ footer.note code{font-family:"IBM Plex Mono",monospace; font-size:12px;
 
 <footer class="note">
   <h3>What it is deciding, and on what</h3>
+  <p id="whereFrom" hidden>The magazines and rails these labels go into come from
+     the same project. Take the ready&#8209;to&#8209;print 3MFs from the
+     <a href="#" id="relLink">latest release</a>, or build them from the OpenSCAD
+     source in the <a href="#" id="repoLink">repository</a>.</p>
   <p><b>Tape width</b> comes from the package, following EIA&#8209;481: everything up
      to 1210 and SOT&#8209;23 rides 8&nbsp;mm tape, SOIC&#8209;8 and most QFNs 12&nbsp;mm,
      wide SOICs and 7&times;7 QFPs 16&nbsp;mm. The package itself is read out of the
@@ -459,6 +470,26 @@ const capacityOf = (r, carrier, pitch) =>
   Math.floor(Math.PI * (r*r - R_HUB*R_HUB) / carrier / pitch);
 
 const $ = s => document.querySelector(s);
+
+/* Where the printable magazines live. Served from GitHub Pages this is
+   derivable and needs no configuration: user.github.io/repo is served out of
+   github.com/user/repo. Opened as a local file there is nothing to derive
+   from, so PROJECT_URL is the fallback - set it and the local copy links to
+   the same place the hosted one does. */
+const PROJECT_URL = "";
+const REPO = (function(){
+  const m = location.hostname.match(/^([A-Za-z0-9-]+)\.github\.io$/i);
+  if(m){
+    const seg = location.pathname.split("/").filter(Boolean);
+    return "https://github.com/" + m[1] + "/" + (seg.length ? seg[0] : location.hostname);
+  }
+  return PROJECT_URL || null;
+})();
+const releaseHref = file => REPO + "/releases/latest/download/" + file;
+/* Release assets are a flat list, so the nozzle folder that separates them in
+   print/ has to move into the filename. src/build.sh --release does exactly
+   this renaming, so the two cannot drift apart. */
+const assetName = (plate, noz) => plate + "-" + noz + "mm-nozzle.3mf";
 
 /* ============================================================== packages ===
    Tape width per EIA-481. Pitch is the usual carrier pitch for that body;
@@ -1771,7 +1802,13 @@ function recommend(){
   const cap = size === "xl" ? capXL : capStd;
   const name = "magazine-" + size + "-" + tape + "mm";
   el.plateName.textContent = name;
-  el.platePath.textContent = "print/" + noz + "mm-nozzle/" + name + ".3mf";
+  if(REPO){
+    const f = assetName(name, noz);
+    el.platePath.innerHTML = '<a href="' + releaseHref(f) + '" download>&darr; '
+      + esc(f) + "</a>";
+  }else{
+    el.platePath.textContent = "print/" + noz + "mm-nozzle/" + name + ".3mf";
+  }
 
   /* Tape width is the one thing that cannot be guessed for an IC: nothing in
      ATSAMD21G18A-AU says TQFP-48, and quietly defaulting to 8mm would send you
@@ -1811,11 +1848,13 @@ function recommend(){
   el.fillRight.innerHTML = "holds <b>" + cap.toLocaleString() + "</b>" +
     (over ? " — needs " + Math.ceil(qty/cap) + " magazines" : "");
 
-  el.railNote.innerHTML = size === "xl"
-    ? "XL magazines hang on the XL rails — <span class=\"k\">print/rails/rail-xl-300mm.3mf</span>, "
-      + Math.floor(300 / (tape + 3.3)) + " per 300 mm."
-    : "Hangs on the standard rails — <span class=\"k\">print/rails/rail-300mm.3mf</span>, "
-      + Math.floor(300 / (tape + 3.3)) + " per 300 mm.";
+  const rail = size === "xl" ? "rail-xl-300mm.3mf" : "rail-300mm.3mf";
+  const railRef = REPO
+    ? '<a href="' + releaseHref(rail) + '" download>' + rail + "</a>"
+    : '<span class="k">print/rails/' + rail + "</span>";
+  el.railNote.innerHTML = (size === "xl" ? "XL magazines hang on the XL rails — "
+                                         : "Hangs on the standard rails — ")
+    + railRef + ", " + Math.floor(300 / (tape + 3.3)) + " per 300 mm.";
 }
 
 /* ---- preview: the same layout at screen scale on the two chosen filaments,
@@ -2181,6 +2220,17 @@ if(location.search.indexOf("selftest") >= 0){
 /* Canvas takes its font from the document, so nothing may be rasterised
    before the webfonts arrive - otherwise the mesh is extruded from the
    fallback face. */
+/* Someone landing on the hosted page has the labeller but not the thing the
+   labels go into, so point at it. Hidden when there is nowhere to point. */
+if(REPO){
+  const pl = document.getElementById("projlink");
+  pl.href = REPO + "/releases/latest";
+  pl.hidden = false;
+  document.getElementById("relLink").href = REPO + "/releases/latest";
+  document.getElementById("repoLink").href = REPO;
+  document.getElementById("whereFrom").hidden = false;
+}
+
 (async function(){
   renderQueue(); refresh();
   try{

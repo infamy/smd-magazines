@@ -27,7 +27,7 @@ Two licences, because this repository holds two different kinds of thing.
 | | |
 |---|---|
 | **[CC-BY-SA 4.0](LICENSE)** | The design. `src/*.scad`, the imported profiles in `src/LordAsdi_sources/`, the renders and this documentation. Not a free choice: two of the upstreams above are share-alike, so anything derived from them has to be too. Attribution and share-alike carry on to anything you make from it. |
-| **[MIT](LICENSE-MIT)** | The software. `tools/label-maker.html` and the build tooling in `src/` — `build.sh`, `make_3mf.py`, `place_stl.py`, `compare_sizes.py`, `draw_rail_profile.py`. Written here from scratch, and no use to anyone under a licence Creative Commons themselves [advise against for code](https://creativecommons.org/faq/#can-i-apply-a-creative-commons-license-to-software). |
+| **[MIT](LICENSE-MIT)** | The software. `docs/index.html` and the build tooling in `src/` — `build.sh`, `make_3mf.py`, `place_stl.py`, `compare_sizes.py`, `draw_rail_profile.py`. Written here from scratch, and no use to anyone under a licence Creative Commons themselves [advise against for code](https://creativecommons.org/faq/#can-i-apply-a-creative-commons-license-to-software). |
 
 Every file under MIT carries an `SPDX-License-Identifier: MIT` line, so there
 is no guessing which side of the line it falls on. Anything without one is
@@ -130,13 +130,20 @@ edge, shaving the last millimetre across 46 of its 52.8mm width.
 
 ## Labelling what you put in them
 
-`tools/label-maker.html` answers the two questions that come up every time a
+`docs/index.html` answers the two questions that come up every time a
 reel arrives: which magazine to print for it, and what goes on the card.
 
 ![Eight labels at actual size](reference/renders/labels-sample.png)
 
 Open the file — that is the whole install. No build step, no server, no
-network, no account. Scan a reel with a USB barcode scanner (they type like a
+network, no account. It is also the GitHub Pages site for this repository:
+Pages serves `docs/` on `main`, so the tool is live at the project's Pages URL
+with nothing to deploy. Served from there it works out which repository it came
+from and turns its own recommendation into a download link straight to the
+release asset, so a scan ends at the magazine rather than at a filename. Opened
+as a local file there is nothing to derive from, so it prints the `print/` path
+instead — set `PROJECT_URL` near the top of the file to link a local copy at
+the same place. Scan a reel with a USB barcode scanner (they type like a
 keyboard) or paste a code; DigiKey and Mouser Data Matrix, LCSC/JLCPCB QR, and
 bare part numbers all work. Nothing about the part is looked up online, because
 the barcode already carries the manufacturer part number and the quantity.
@@ -159,6 +166,11 @@ the value gets the rest. Output is a plain core-spec 3MF with two objects and
 two base materials, the same shape `make_3mf.py` writes, so it imports beside
 the magazine parts — assign the two to AMS slots. Labels queue up as you scan,
 and **Save plate** writes them all as one 3MF laid out for your bed.
+
+Release assets are a flat list, so the nozzle folder that separates the plates
+in `print/` becomes part of the filename. `./src/build.sh --release` does that
+renaming into `release/`, and the page builds its download links by the same
+rule, so the two cannot drift apart.
 
 Geometry is built in the page: text rasterised at 40 px/mm, contours traced off
 the bitmap, simplified, holes bridged and ear-clipped, then extruded to a
@@ -191,7 +203,7 @@ $OPENSCAD --render -D 'SCENE="widths"' -D SPAN=75 --imgsize=1400,1000 \
 
 ```
 src/         OpenSCAD sources, build tooling, imported profiles
-tools/       label-maker.html - the reel intake bench, see below
+docs/        index.html - the reel intake bench, also served on Pages
 reference/   renders and measured drawings
 print/       built 3MFs land here     (not in git; see Releases)
 stl/         built STLs land here     (not in git)
@@ -202,7 +214,7 @@ stl/         built STLs land here     (not in git)
 Needs **OpenSCAD and python3**. No slicer — building a plate never launches one.
 
 ```bash
-cd magazine && ./src/build.sh
+./src/build.sh
 ```
 
 That produces all sixteen plates - six magazines per nozzle plus four rails. `./src/build.sh magazine-xl-12mm` does one; an
