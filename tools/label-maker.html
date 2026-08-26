@@ -463,6 +463,13 @@ const $ = s => document.querySelector(s);
    both are overridable because reels do vary.                              */
 const PKGS = [
   {id:"?",        name:"— not sure —",          tape:8,  pitch:4,  carrier:0.8},
+  /* Plenty of parts have no tidy package name - connectors, modules, crystals,
+     anything odd - but the tape they came on is printed right there on the
+     reel. Setting the width directly skips the guessing entirely. Pitch and
+     carrier get middling defaults for that width and stay overridable. */
+  {id:"T8",  name:"8 mm tape",  tape:8,  pitch:4,  carrier:1.5, generic:true},
+  {id:"T12", name:"12 mm tape", tape:12, pitch:8,  carrier:2.2, generic:true},
+  {id:"T16", name:"16 mm tape", tape:16, pitch:12, carrier:2.2, generic:true},
   {id:"0201",     name:"0201",                  tape:8,  pitch:2,  carrier:0.8},
   {id:"0402",     name:"0402",                  tape:8,  pitch:2,  carrier:0.8},
   {id:"0603",     name:"0603",                  tape:8,  pitch:4,  carrier:0.8},
@@ -1691,8 +1698,14 @@ for(const id of ["scan","fields","srcchip","l1","l2","l3","s1","s2","s3","tape",
                  "railNote"])
   el[id] = document.getElementById(id);
 
-el.pkg.innerHTML = PKGS.map(p =>
-  '<option value="' + p.id + '">' + p.name + "</option>").join("");
+const optFor = p => '<option value="' + p.id + '">' + p.name + "</option>";
+el.pkg.innerHTML =
+    optFor(PKGS[0])
+  + '<optgroup label="I know the tape width">'
+  + PKGS.filter(p => p.generic).map(optFor).join("")
+  + '</optgroup><optgroup label="I know the package">'
+  + PKGS.filter(p => !p.generic && p.id !== "?").map(optFor).join("")
+  + "</optgroup>";
 
 let queue = [];
 try{ queue = JSON.parse(localStorage.getItem("smd-labels") || "[]") || []; }
@@ -1753,13 +1766,16 @@ function recommend(){
      ATSAMD21G18A-AU says TQFP-48, and quietly defaulting to 8mm would send you
      off to print a magazine the reel does not fit. Say so instead. */
   const unsure = el.pkg.value === "?";
+  const pk = pkgById(el.pkg.value);
   el.plateName.parentElement.setAttribute("data-unsure", unsure ? "1" : "0");
   const bits = [];
   if(unsure)
     bits.push("<b>Pick the package first</b> — this part number does not say " +
               "what it is, so the tape width below is only a default");
+  else if(pk.generic)
+    bits.push("<b>" + tape + " mm tape</b> because you set it");
   else
-    bits.push("<b>" + tape + " mm tape</b> for " + pkgById(el.pkg.value).name);
+    bits.push("<b>" + tape + " mm tape</b> for " + pk.name);
   if(why === "auto" && size === "xl")
     bits.push("<b>XL</b> because " + qty.toLocaleString() +
       " will not fit a standard's " + capStd.toLocaleString());
@@ -1980,8 +1996,10 @@ function applyPackage(){
   el.pitch.value = String(p.pitch);
   el.carrier.value = String(p.carrier);
   // picking a package by hand should put it on the label, same as a scan does
-  if(!el.badge.value.trim() || PKGS.some(q => q.id === el.badge.value.trim()))
-    el.badge.value = p.id;
+  const cur = el.badge.value.trim();
+  if(cur && !PKGS.some(q => q.id === cur)) return;   // something typed: leave it
+  // "T12" means nothing on a card, so a width-only choice leaves the band free
+  el.badge.value = p.generic ? "" : p.id;
 }
 
 /* ---- queue */
