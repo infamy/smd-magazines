@@ -196,10 +196,8 @@ python3 tools/make_pdf.py          # publish/SMD-magazines-instructions.pdf
 python3 tools/make_upload.py       # upload/, the zips for the model sites
 ```
 
-Or `mise run release`, which is those four in that order and stops if the
-check fails. `mise.toml` is a convenience, not a dependency — it holds no
-build logic, only the order, and `mise tasks` lists the rest. A fresh clone
-needs `mise trust` first.
+In that order: the check exits non-zero on a real fault, so run it before
+packaging and a bad plate cannot reach a zip.
 
 `check_3mf.py` is worth running before any upload. A slicer does not refuse a
 bad mesh, it repairs it and carries on, so a file can be wrong for a long time
