@@ -1,7 +1,7 @@
 # SMD component tape magazines
 
-Wall-mounted magazines for SMD parts on cut tape, in two capacities and three
-tape widths, plus the rail they clip to.
+Magazines for SMD parts on cut tape, in two capacities and three tape widths,
+plus the rail they clip to.
 
 ![Three tape widths](images/widths-standard.png)
 

@@ -23,8 +23,8 @@ SMD Component Tape Magazines — XL size, anti-release lip, and a label maker
 
 ## Summary
 
-Wall-mounted magazines for SMD parts on cut tape, in three tape widths and two
-capacities, on a rail that takes 26 of them per 300 mm.
+Magazines for SMD parts on cut tape, in three tape widths and two capacities,
+on a rail that takes up to 26 of them per 300 mm.
 
 ## Description
 

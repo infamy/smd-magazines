@@ -1,7 +1,7 @@
 # SMD Component Tape Magazines
 
-Wall-mounted magazines for SMD parts on cut tape, in two capacities and three
-tape widths, plus the rail they clip to.
+Magazines for SMD parts on cut tape, in two capacities and three tape widths,
+plus the rail they clip to.
 
 A derivative work — the geometry that matters is not mine. Credits and licence
 are at the end of this document.
@@ -61,8 +61,8 @@ Per magazine:
 The screws thread straight into the plastic — no inserts, no nuts. The M3 head
 sits recessed so it cannot catch as you click the magazine onto the rail.
 
-The rail's leaf spring is printed, not bought. Mounting the rail to a wall takes
-whatever screws suit your wall.
+The rail's leaf spring is printed, not bought. The rail has mounting feet at
+95 mm centres; what goes through them depends on where you are putting it.
 
 ---
 
