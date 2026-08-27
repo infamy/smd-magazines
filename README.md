@@ -27,7 +27,7 @@ Two licences, because this repository holds two different kinds of thing.
 | | |
 |---|---|
 | **[CC-BY-SA 4.0](LICENSE)** | The design. `scad/*.scad`, the imported profiles in `scad/upstream/`, the renders and this documentation. Not a free choice: two of the upstreams above are share-alike, so anything derived from them has to be too. Attribution and share-alike carry on to anything you make from it. |
-| **[MIT](LICENSE-MIT)** | The software. `label-maker/index.html` and the build tooling in `tools/` — `build.sh`, `make_3mf.py`, `place_stl.py`, `compare_sizes.py`, `draw_rail_profile.py`. Written here from scratch, and no use to anyone under a licence Creative Commons themselves [advise against for code](https://creativecommons.org/faq/#can-i-apply-a-creative-commons-license-to-software). |
+| **[MIT](LICENSE-MIT)** | The software. `label-maker/index.html` and everything in `tools/`. Written here from scratch, and no use to anyone under a licence Creative Commons themselves [advise against for code](https://creativecommons.org/faq/#can-i-apply-a-creative-commons-license-to-software). |
 
 Every file under MIT carries an `SPDX-License-Identifier: MIT` line, so there
 is no guessing which side of the line it falls on. Anything without one is
