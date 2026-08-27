@@ -217,17 +217,17 @@ module p_slider()      { grow() scale([body_scale,body_scale]) 2d_slider(); }
 // which is licensed under CC-BY 4.0
 module body_centered()
 {
-    translate([-0.4,-32.5,0])rotate([-90,0,0]) import("LordAsdi_sources/Body_8mm.stl");
+    translate([-0.4,-32.5,0])rotate([-90,0,0]) import("upstream/Body_8mm.stl");
 }
 
 module lid_centered()
 {
-    translate([-0.4,-32.5,-14.2])rotate([-90,0,0]) import("LordAsdi_sources/Lid.stl");
+    translate([-0.4,-32.5,-14.2])rotate([-90,0,0]) import("upstream/Lid.stl");
 }
 
 module slider_centered()
 {
-    translate([-0.4,-32.5,0])rotate([-90,0,0])  import("LordAsdi_sources/Slider_8mm.stl");
+    translate([-0.4,-32.5,0])rotate([-90,0,0])  import("upstream/Slider_8mm.stl");
 }
 
 module 2d_right()

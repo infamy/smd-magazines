@@ -3,7 +3,7 @@
 Wall-mounted magazines for SMD parts on cut tape, in two capacities and three
 tape widths, plus the rail they clip to.
 
-![Three tape widths](reference/renders/widths-standard.png)
+![Three tape widths](images/widths-standard.png)
 
 ## Credit where it is due
 
@@ -12,8 +12,8 @@ slider, rail and leaf spring — is not ours.
 
 | | |
 |---|---|
-| **[@LordAsdi](https://www.printables.com/model/580643)** | The original SMD Component Tape Magazine. Every 2D profile in `src/` is projected from their STLs, which are kept verbatim in `src/LordAsdi_sources/`. Licensed **CC-BY 4.0**. |
-| **T. Wirtl (tobi)** | The parametric OpenSCAD remix that turned those STLs into adjustable code. `src/container.scad` and `src/rail.scad` keep their original headers. Licensed **CC-BY-SA 4.0**. |
+| **[@LordAsdi](https://www.printables.com/model/580643)** | The original SMD Component Tape Magazine. Every 2D profile in `scad/` is projected from their STLs, which are kept verbatim in `scad/upstream/`. Licensed **CC-BY 4.0**. |
+| **T. Wirtl (tobi)** | The parametric OpenSCAD remix that turned those STLs into adjustable code. `scad/container.scad` and `scad/rail.scad` keep their original headers. Licensed **CC-BY-SA 4.0**. |
 | **[Bryan Varner](https://www.printables.com/model/1350841)** | The Varnerized Edition, the version this tree started from. Licensed **CC-BY-SA 4.0**. |
 | **[Robin Reiter](https://www.youtube.com/watch?v=YbU5u_0wWts)** | Not a code ancestor — the *inspiration*. His "SMD Magazines G2" video is where the anti-release lip idea comes from. |
 
@@ -26,8 +26,8 @@ Two licences, because this repository holds two different kinds of thing.
 
 | | |
 |---|---|
-| **[CC-BY-SA 4.0](LICENSE)** | The design. `src/*.scad`, the imported profiles in `src/LordAsdi_sources/`, the renders and this documentation. Not a free choice: two of the upstreams above are share-alike, so anything derived from them has to be too. Attribution and share-alike carry on to anything you make from it. |
-| **[MIT](LICENSE-MIT)** | The software. `docs/index.html` and the build tooling in `src/` — `build.sh`, `make_3mf.py`, `place_stl.py`, `compare_sizes.py`, `draw_rail_profile.py`. Written here from scratch, and no use to anyone under a licence Creative Commons themselves [advise against for code](https://creativecommons.org/faq/#can-i-apply-a-creative-commons-license-to-software). |
+| **[CC-BY-SA 4.0](LICENSE)** | The design. `scad/*.scad`, the imported profiles in `scad/upstream/`, the renders and this documentation. Not a free choice: two of the upstreams above are share-alike, so anything derived from them has to be too. Attribution and share-alike carry on to anything you make from it. |
+| **[MIT](LICENSE-MIT)** | The software. `label-maker/index.html` and the build tooling in `tools/` — `build.sh`, `make_3mf.py`, `place_stl.py`, `compare_sizes.py`, `draw_rail_profile.py`. Written here from scratch, and no use to anyone under a licence Creative Commons themselves [advise against for code](https://creativecommons.org/faq/#can-i-apply-a-creative-commons-license-to-software). |
 
 Every file under MIT carries an `SPDX-License-Identifier: MIT` line, so there
 is no guessing which side of the line it falls on. Anything without one is
@@ -42,7 +42,7 @@ the geometry.
 Ready-to-print files are attached to the [latest
 release](../../releases/latest) — the repository itself carries source only, so
 a clone stays small and nothing here is a stale copy of something the build
-produces. To make them yourself instead, run `src/build.sh`; they land in
+produces. To make them yourself instead, run `tools/build.sh`; they land in
 `print/`.
 
 Either way they are plain **core-spec 3MF**: geometry and filament assignment,
@@ -94,9 +94,9 @@ The badge is grouped with its body as 3MF **components**, so it is one build
 item — a slicer's Arrange moves the pair together and cannot slide the badge out
 of its recess.
 
-![Standard magazine, exploded](reference/renders/magazine-standard.png)
+![Standard magazine, exploded](images/magazine-standard.png)
 
-![XL magazine, exploded](reference/renders/magazine-xl.png)
+![XL magazine, exploded](images/magazine-xl.png)
 
 ### Rail capacity
 
@@ -126,19 +126,19 @@ as one long leaf would be. Each segment keeps 7mm of solid land at both ends —
 the previous single 300mm leaf had a lightening slot landing exactly on its free
 edge, shaving the last millimetre across 46 of its 52.8mm width.
 
-![Rail](reference/renders/rail.png)
+![Rail](images/rail.png)
 
 ## Labelling what you put in them
 
-`docs/index.html` answers the two questions that come up every time a
+`label-maker/index.html` answers the two questions that come up every time a
 reel arrives: which magazine to print for it, and what goes on the card.
 
-![Eight labels at actual size](reference/renders/labels-sample.png)
+![Eight labels at actual size](images/labels-sample.png)
 
 Open the file — that is the whole install. No build step, no server, no
-network, no account. It is also the GitHub Pages site for this repository:
-Pages serves `docs/` on `main`, so the tool is live at the project's Pages URL
-with nothing to deploy. Served from there it works out which repository it came
+network, no account. It is also the GitHub Pages site for this
+repository, published from `label-maker/` by the workflow in `.github/`, so the
+live tool and the source are one file with no second copy to drift. Served from there it works out which repository it came
 from and turns its own recommendation into a download link straight to the
 release asset, so a scan ends at the magazine rather than at a filename. Opened
 as a local file there is nothing to derive from, so it prints the `print/` path
@@ -168,7 +168,7 @@ the magazine parts — assign the two to AMS slots. Labels queue up as you scan,
 and **Save plate** writes them all as one 3MF laid out for your bed.
 
 Release assets are a flat list, so the nozzle folder that separates the plates
-in `print/` becomes part of the filename. `./src/build.sh --release` does that
+in `print/` becomes part of the filename. `./tools/build.sh --release` does that
 renaming into `release/`, and the page builds its download links by the same
 rule, so the two cannot drift apart.
 
@@ -183,41 +183,44 @@ them.
 ## Regenerating the figures
 
 ```bash
-cd magazine
-python3 src/draw_rail_profile.py          # reference/rail_side_profile.{svg,png}
+python3 tools/draw_rail_profile.py    # images/rail-side-profile.{svg,png}
 ```
 
 That script is self-contained — it drives OpenSCAD itself and derives every
 dimension label from the measured section, so the drawing cannot disagree with
-the part. The renders in `reference/renders/` come from `src/render.scad`, one
+the part. The renders in `images/` come from `scad/render.scad`, one
 scene per pass:
 
 ```bash
 OPENSCAD=/Applications/OpenSCAD.app/Contents/MacOS/OpenSCAD
 $OPENSCAD --render -D 'SCENE="widths"' -D SPAN=75 --imgsize=1400,1000 \
   --projection=p --colorscheme=Tomorrow --viewall --autocenter \
-  --camera=0,0,0,115,0,15,0 -o reference/renders/widths-standard.png src/render.scad
+  --camera=0,0,0,115,0,15,0 -o images/widths-standard.png scad/render.scad
 ```
 
 ## Layout
 
 ```
-src/         OpenSCAD sources, build tooling, imported profiles
-docs/        index.html - the reel intake bench, also served on Pages
-reference/   renders and measured drawings
-print/       built 3MFs land here     (not in git; see Releases)
-stl/         built STLs land here     (not in git)
+scad/            the design, OpenSCAD sources               CC-BY-SA 4.0
+  upstream/      LordAsdi's STLs, verbatim, for the profiles  CC-BY 4.0
+tools/           build tooling                                     MIT
+label-maker/     index.html, the reel intake bench                 MIT
+images/          what the README shows, all generated
+print/ stl/ release/    build outputs, not in git - see Releases
 ```
+
+The folders follow the licence split, so which licence covers a file is a
+matter of where it sits rather than something to take on trust.
 
 ## Building
 
 Needs **OpenSCAD and python3**. No slicer — building a plate never launches one.
 
 ```bash
-./src/build.sh
+./tools/build.sh
 ```
 
-That produces all sixteen plates - six magazines per nozzle plus four rails. `./src/build.sh magazine-xl-12mm` does one; an
+That produces all sixteen plates - six magazines per nozzle plus four rails. `./tools/build.sh magazine-xl-12mm` does one; an
 unknown name lists the valid ones rather than silently building nothing. The
 OpenSCAD binary is `$OPENSCAD` if you set it.
 
@@ -262,7 +265,7 @@ an **undercut band at each end** (x −23.70..−20.01 and 24.00..32.49) where a
 vertical line meets the outline four or six times, so the outline is not a
 function of x there.
 
-![Rail side profile](reference/rail_side_profile.png)
+![Rail side profile](images/rail-side-profile.png)
 
 **Longer** is `rail_len`. **Wider** is `rail_grow_x`, which moves both hooks
 25mm apart to match the XL foot.
@@ -299,7 +302,7 @@ feet 1.000 / 1.005mm deep. The standard rail is **byte-identical** to before at
 
 ## Checking a grown size against the standard
 
-`src/compare_sizes.py` slices both sizes at eight heights and asks, for a grid of
+`tools/compare_sizes.py` slices both sizes at eight heights and asks, for a grid of
 sample points: is the material at (x, y) in the standard also material at
 `gp(x, y)` in the grown part? Away from the seam that must hold everywhere.
 
@@ -348,4 +351,4 @@ all four slider pin/slot pairs.
   out to the XL foot, sharing one seat height so a single leaf spring serves
   both. It also needs the XL floor deepened 3mm → about 13mm, or the standard
   hooks punch up into the XL's tape space — see
-  `reference/why_xl_foot_must_deepen.png`.
+  `images/why-xl-foot-must-deepen.png`.

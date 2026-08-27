@@ -25,7 +25,7 @@ import tempfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-CONTAINER = HERE / "container.scad"
+CONTAINER = HERE.parent / "scad" / "container.scad"
 
 # build.sh honours $OPENSCAD; so does this, or a machine that has OpenSCAD
 # somewhere else can build but cannot check what it built.

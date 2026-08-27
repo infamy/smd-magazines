@@ -487,7 +487,7 @@ const REPO = (function(){
 })();
 const releaseHref = file => REPO + "/releases/latest/download/" + file;
 /* Release assets are a flat list, so the nozzle folder that separates them in
-   print/ has to move into the filename. src/build.sh --release does exactly
+   print/ has to move into the filename. tools/build.sh --release does exactly
    this renaming, so the two cannot drift apart. */
 const assetName = (plate, noz) => plate + "-" + noz + "mm-nozzle.3mf";
 

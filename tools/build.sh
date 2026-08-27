@@ -15,6 +15,7 @@ set -euo pipefail
 OPENSCAD=${OPENSCAD:-/Applications/OpenSCAD.app/Contents/MacOS/OpenSCAD}
 HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(cd "$HERE/.." && pwd)
+SCAD="$ROOT/scad"
 PRINT="$ROOT/print"
 STL="$ROOT/stl"
 
@@ -37,7 +38,7 @@ rail-100mm rail-300mm rail-xl-100mm rail-xl-300mm"
 
 # --release builds the lot, then flattens print/ into release/ under the names
 # the GitHub release assets use. Release assets are a flat list, so the nozzle
-# folder has to become part of the filename; docs/index.html builds its download
+# folder has to become part of the filename; label-maker/index.html builds its download
 # links from the same rule, so the two cannot drift apart.
 RELEASE=0
 if [ "${1:-}" = "--release" ]; then RELEASE=1; shift; fi
@@ -65,7 +66,7 @@ magazine() {
         printf '    %-7s ' "$p"
         rm -f "$out/$p.stl"          # never let a stale part survive a failure
         if ! bash -c "\"$OPENSCAD\" $opts -D plate_width=$w -D 'PART=\"$p\"' \
-                 -o '$out/$p.stl' '$HERE/magazine_plate.scad'" 2>"$out/$p.err"; then
+                 -o '$out/$p.stl' '$SCAD/magazine_plate.scad'" 2>"$out/$p.err"; then
             echo "FAILED"; sed 's/^/      /' "$out/$p.err"; exit 1
         fi
         [ -s "$out/$p.stl" ] || { echo "FAILED - no output"; exit 1; }
@@ -113,7 +114,7 @@ rail() {
         printf '    %-7s ' "$p"
         rm -f "$out/$p.stl"
         if ! "$OPENSCAD" -D "rail_grow_x=$grow" -D "PART=\"$p\"" -D "rail_len=$len" \
-                -o "$out/$p.stl" "$HERE/rail_plate.scad" 2>"$out/$p.err"; then
+                -o "$out/$p.stl" "$SCAD/rail_plate.scad" 2>"$out/$p.err"; then
             echo "FAILED"; sed 's/^/      /' "$out/$p.err"; exit 1
         fi
         [ -s "$out/$p.stl" ] || { echo "FAILED - no output"; exit 1; }

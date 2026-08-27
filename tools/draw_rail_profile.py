@@ -11,7 +11,7 @@ nothing can float and nothing can go stale when the profile changes.
   ./draw_rail_profile.py [out.svg]
 
 Writes the SVG and, if a converter is installed, the PNG beside it. Default is
-../reference/rail_side_profile.svg relative to this file.
+../images/rail-side-profile.svg relative to this file.
 """
 import argparse
 import html
@@ -24,7 +24,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 OPENSCAD = "/Applications/OpenSCAD.app/Contents/MacOS/OpenSCAD"
-DEFAULT_OUT = HERE.parent / "reference" / "rail_side_profile.svg"
+DEFAULT_OUT = HERE.parent / "images" / "rail-side-profile.svg"
 
 # OpenSCAD writes on-zero coordinates in exponent form ("-20,7.47293e-06").
 # Without the exponent clause that parses as -20,7.47293 - a 7.5mm error.
@@ -45,7 +45,7 @@ def profile_polys():
     """
     with tempfile.TemporaryDirectory() as td:
         scad = Path(td) / "p.scad"
-        scad.write_text(f"use <{HERE}/rail.scad>\n"
+        scad.write_text(f"use <{HERE.parent}/scad/rail.scad>\n"
                         f"$fn=100;\n"
                         f"2d_rail_profile_weights_round();\n")
         svg = Path(td) / "p.svg"

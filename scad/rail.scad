@@ -183,7 +183,7 @@ module 2d_rail_body_wide(d = rail_grow_x) {
 // which is licensed under CC-BY 4.0
 module rail_centered()
 {
-    rotate([-90,0,0])translate([0,0,1])import("LordAsdi_sources/rail_100mm.stl");
+    rotate([-90,0,0])translate([0,0,1])import("upstream/rail_100mm.stl");
 }
 
 /* ------------------------------------------------------------------

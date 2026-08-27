@@ -1,0 +1,42 @@
+# Publishes label-maker/ as the GitHub Pages site.
+#
+# Pages can only serve the repository root or /docs by itself, and neither
+# name says what that file is. Deploying through Actions instead lets the tool
+# live in a folder named after what it does, with no second copy to drift out
+# of step with the source.
+#
+# One-time setup: Settings -> Pages -> Source: GitHub Actions.
+name: Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'label-maker/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a running deploy finish rather than cancelling it midway.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: label-maker
+      - id: deployment
+        uses: actions/deploy-pages@v4
