@@ -7,11 +7,13 @@ Paste-ready.
 | field | value |
 |---|---|
 | Licence | **CC-BY-SA 4.0** — required, inherited, not a choice |
-| Remix of | `https://www.printables.com/model/1350841` (Bryan Varner) |
+| Remix of | `https://www.printables.com/model/1350841` (Bryan Varner) and `https://www.printables.com/model/580643` (@LordAsdi) |
 | Category | Tools & Gadgets → Organizers |
 
-Printables links one parent only, so Varner goes in the Remix field and the
-rest of the chain is credited in the body below.
+LordAsdi and Varner go in the Remix fields. tobi and Robin Reiter stay in the
+description because there is nothing on Printables to link them to - and
+tobi's is a required attribution, not a courtesy: the share-alike obligation
+on this whole tree comes from his licence.
 
 ---
 
@@ -97,16 +99,14 @@ Parametric OpenSCAD, and the tooling that builds every plate:
 
 ---
 
-### Credit and licence
+### Also credited
 
-Not mine, most of it:
+The remix links cover @LordAsdi's original and Bryan Varner's edition. Two more
+belong here that Printables has nothing to link to:
 
-- **@LordAsdi** — the original SMD Component Tape Magazine, CC-BY 4.0.
-  https://www.printables.com/model/580643
-- **T. Wirtl (tobi)** — the parametric OpenSCAD remix, CC-BY-SA 4.0.
-- **Bryan Varner** — the Varnerized Edition, what this started from,
-  CC-BY-SA 4.0. https://www.printables.com/model/1350841
-- **Robin Reiter** — not a code ancestor, the inspiration for the lip.
+- **T. Wirtl (tobi)** — rebuilt the original as parametric OpenSCAD,
+  CC-BY-SA 4.0. That code is what this is built on, and the share-alike
+  comes from him.
+- **Robin Reiter** — not a code ancestor, the inspiration for the release lip.
 
-**CC-BY-SA 4.0**, inherited from that chain. Anything you make from this
-carries the same licence and the same credits.
+Anything you make from this carries the same licence and the same credits.

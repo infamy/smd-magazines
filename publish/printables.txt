@@ -42,13 +42,11 @@ Source
 
 Parametric OpenSCAD, and the tooling that builds every plate: https://github.com/infamy/smd-magazines
 
-Credit and licence
+Also credited
 
-Not mine, most of it:
+The remix links cover @LordAsdi's original and Bryan Varner's edition. Two more belong here that Printables has nothing to link to:
 
-• @LordAsdi — the original SMD Component Tape Magazine, CC-BY 4.0. https://www.printables.com/model/580643
-• T. Wirtl (tobi) — the parametric OpenSCAD remix, CC-BY-SA 4.0.
-• Bryan Varner — the Varnerized Edition, what this started from, CC-BY-SA 4.0. https://www.printables.com/model/1350841
-• Robin Reiter — not a code ancestor, the inspiration for the lip.
+• T. Wirtl (tobi) — rebuilt the original as parametric OpenSCAD, CC-BY-SA 4.0. That code is what this is built on, and the share-alike comes from him.
+• Robin Reiter — not a code ancestor, the inspiration for the release lip.
 
-CC-BY-SA 4.0, inherited from that chain. Anything you make from this carries the same licence and the same credits.
+Anything you make from this carries the same licence and the same credits.
