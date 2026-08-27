@@ -194,6 +194,7 @@ someone who already has the files and wants to assemble them.
 ./tools/check_3mf.py               # verify every plate before it ships
 python3 tools/make_pdf.py          # publish/SMD-magazines-instructions.pdf
 python3 tools/make_upload.py       # upload/, the zips for the model sites
+python3 tools/make_listing.py      # publish/*.txt, paste-ready descriptions
 ```
 
 In that order: the check exits non-zero on a real fault, so run it before
@@ -212,9 +213,13 @@ round-tripping all sixty back and comparing against the originals: worst
 coordinate difference 0.015 microns, which is float32 quantisation and nothing
 else. The 3MFs are copied byte for byte, because they are what people print.
 
-`printables.md` and `makerworld.md` are the listing descriptions, paste-ready
-apart from two URL placeholders, each with the licence and remix fields the
-upload form needs. Both carry the full credit chain in the body text:
+`printables.md` and `makerworld.md` are the listing descriptions, each with the
+licence and remix fields the upload form needs. Paste the `.txt` beside them,
+not the markdown: `make_listing.py` produces those, because both sites use
+rich-text editors rather than markdown fields, and the `.md` pastes in badly
+twice over - the markup arrives as literal punctuation, and the 80-column
+wrapping arrives as real line breaks, so each paragraph lands as eight separate
+lines that the editor's own wrapping can no longer reflow. Both carry the full credit chain in the body text:
 Printables links only one parent, and MakerWorld's remix credit only points at
 models hosted there, so neither platform can express a three-deep chain that
 lives on Printables. The text has to.
