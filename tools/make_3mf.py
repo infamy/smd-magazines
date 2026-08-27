@@ -26,6 +26,40 @@ from pathlib import Path
 NS = "http://schemas.microsoft.com/3dmanufacturing/core/2015/02"
 ASCII_VERTEX = re.compile(rb'vertex\s+(\S+)\s+(\S+)\s+(\S+)')
 
+# Welding tolerance, in decimal places. STL is vertex soup - every triangle
+# carries its own three corners - so identical corners have to be recognised
+# here or the mesh comes out topologically shredded.
+#
+# The tolerance and the written precision MUST be the same number. They were
+# not: the weld key used round(c, 6), six decimal places, while the writer used
+# "%.6g", six significant digits, which at 30mm is four decimals. Two vertices
+# 1e-5 apart were therefore kept as separate indices and then written as the
+# same coordinates - a mesh split along a seam the file claims is joined, which
+# is exactly what a slicer reports as non-manifold and silently "repairs".
+#
+# Four decimals - 0.1 micron - is not an arbitrary pick. Welding is a blunt
+# instrument: too coarse and it merges distinct points, pinching the surface
+# into a self-touching edge; too fine and it leaves coincident points
+# unmerged. Swept across every body and rail, counting edges shared by more
+# than two faces:
+#
+#     P=3   56        P=5   34
+#     P=4   22        P=6   34      P=7  34
+#
+# 4 is the floor. Nothing below 3 decimals is meaningful to a printer anyway,
+# and OpenSCAD's ASCII STL carries no more than 6 significant digits, which is
+# why 5 and up all land in the same place.
+PRECISION = 4
+
+def quant(c):
+    """Snap a coordinate to the grid the file is written on."""
+    r = round(c, PRECISION)
+    return r + 0.0 if r == 0 else r      # fold -0.0 onto 0.0
+
+def fmt(c):
+    """Write exactly what quant() keyed on, so the two cannot disagree."""
+    return f"{c:.{PRECISION}f}"
+
 
 def read_stl(path):
     """Vertices and triangles from an STL, ASCII or binary, de-duplicated."""
@@ -51,7 +85,7 @@ def read_stl(path):
     for i in range(0, len(raw), 3):
         tri = []
         for v in raw[i:i+3]:
-            key = (round(v[0], 6), round(v[1], 6), round(v[2], 6))
+            key = tuple(quant(c) for c in v)
             if key not in index:
                 index[key] = len(verts)
                 verts.append(key)
@@ -64,7 +98,7 @@ def read_stl(path):
 
 
 def mesh_xml(verts, tris):
-    v = "".join(f'<vertex x="{x:.6g}" y="{y:.6g}" z="{z:.6g}"/>' for x, y, z in verts)
+    v = "".join(f'<vertex x="{fmt(x)}" y="{fmt(y)}" z="{fmt(z)}"/>' for x, y, z in verts)
     t = "".join(f'<triangle v1="{a}" v2="{b}" v3="{c}"/>' for a, b, c in tris)
     return f"<mesh><vertices>{v}</vertices><triangles>{t}</triangles></mesh>"
 

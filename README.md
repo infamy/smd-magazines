@@ -188,9 +188,14 @@ is for someone deciding whether the repository is worth their time rather than
 someone who already has the files and wants to assemble them.
 
 ```bash
-python3 tools/make_pdf.py          # publish/SMD-magazines-instructions.pdf
 ./tools/build.sh --release         # release/, flat asset names
+./tools/check_3mf.py               # verify every plate before it ships
+python3 tools/make_pdf.py          # publish/SMD-magazines-instructions.pdf
 ```
+
+`check_3mf.py` is worth running before any upload. A slicer does not refuse a
+bad mesh, it repairs it and carries on, so a file can be wrong for a long time
+without anything saying so.
 
 `printables.md` and `makerworld.md` are the listing descriptions, paste-ready
 apart from two URL placeholders, each with the licence and remix fields the
