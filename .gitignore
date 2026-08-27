@@ -8,6 +8,9 @@
 # OpenSCAD leaves these beside a failed part
 *.err
 
+# Generated from publish/instructions.md by tools/make_pdf.py
+/publish/*.pdf
+
 # Python
 __pycache__/
 *.pyc

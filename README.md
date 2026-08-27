@@ -180,6 +180,25 @@ the page measures all three and reports the worst before you print. Part-number
 decoding has a table of known-good cases baked in; open with `?selftest` to run
 them.
 
+## Publishing
+
+`publish/` holds what the model listings need. `instructions.md` is the build
+document that ships with the download — a different job from this README, which
+is for someone deciding whether the repository is worth their time rather than
+someone who already has the files and wants to assemble them.
+
+```bash
+python3 tools/make_pdf.py          # publish/SMD-magazines-instructions.pdf
+./tools/build.sh --release         # release/, flat asset names
+```
+
+`printables.md` and `makerworld.md` are the listing descriptions, paste-ready
+apart from two URL placeholders, each with the licence and remix fields the
+upload form needs. Both carry the full credit chain in the body text:
+Printables links only one parent, and MakerWorld's remix credit only points at
+models hosted there, so neither platform can express a three-deep chain that
+lives on Printables. The text has to.
+
 ## Regenerating the figures
 
 ```bash
@@ -206,6 +225,7 @@ scad/            the design, OpenSCAD sources               CC-BY-SA 4.0
 tools/           build tooling                                     MIT
 label-maker/     index.html, the reel intake bench                 MIT
 images/          what the README shows, all generated
+publish/         listing text and the instructions PDF source
 print/ stl/ release/    build outputs, not in git - see Releases
 ```
 
