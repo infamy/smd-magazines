@@ -69,7 +69,7 @@ the folder matching yours. The rails suit either.
 ### What you need besides the print
 
 Per magazine: **4 × M2.5 countersunk** screws (into 2.05 mm holes, 6 mm is what
-I used), **1 × M3 button head** (ISO 7380, the coil spring's guide), and a
+I used), **1 × M3 × 16 mm button head** (ISO 7380, the coil spring's guide), and a
 **compression spring** about 4 mm outside diameter, 20 mm free length, 0.4 mm
 wire. Everything threads straight into the plastic — no inserts, no nuts. The
 rail's leaf spring is printed.
@@ -88,6 +88,15 @@ quantity, and checks the lettering is coarse enough for your nozzle before you
 print it. Nothing is looked up online — the barcode already carries the part
 number and the quantity — so it works on a bench PC with no internet.
 
+---
+
+### Source
+
+Parametric OpenSCAD, and the tooling that builds every plate:
+**{{REPO_URL}}**
+
+---
+
 ### Credit and licence
 
 Not mine, most of it:
@@ -101,8 +110,3 @@ Not mine, most of it:
 
 **CC-BY-SA 4.0**, inherited from that chain. Anything you make from this
 carries the same licence and the same credits.
-
-### Source
-
-Parametric OpenSCAD, and the tooling that builds every plate:
-**{{REPO_URL}}**

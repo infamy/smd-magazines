@@ -37,19 +37,10 @@ own label, and you end up counting parts through the cover tape with a torch.
 These are magazines: the tape coils inside, feeds out through a slot, and a
 sprung slider holds it where you left it.
 
-### This is a remix — the credit chain
+This is a remix several generations down — most of the geometry is not mine.
+Full credit chain and licence at the bottom.
 
-Most of this geometry is not mine:
-
-- **@LordAsdi** — the original SMD Component Tape Magazine, CC-BY 4.0
-  https://www.printables.com/model/580643
-- **T. Wirtl (tobi)** — rebuilt it as parametric OpenSCAD, CC-BY-SA 4.0
-- **Bryan Varner** — the Varnerized Edition, the version this started from,
-  CC-BY-SA 4.0 — https://www.printables.com/model/1350841
-- **Robin Reiter** — not a code ancestor, the inspiration for the release lip
-
-Licensed **CC-BY-SA 4.0**, inherited from that chain. Anything you make from
-this carries the same licence and the same credits.
+---
 
 ### What I added
 
@@ -87,7 +78,7 @@ at layers 2 and 3 instead.
 ### What you need besides the print
 
 Per magazine: **4 × M2.5 countersunk** screws (into 2.05 mm holes, 6 mm is what
-I used), **1 × M3 button head** (ISO 7380) as the coil spring's guide, and a
+I used), **1 × M3 × 16 mm button head** (ISO 7380) as the coil spring's guide, and a
 **compression spring** about 4 mm outside diameter, 20 mm free length, 0.4 mm
 wire. All threads form straight in the plastic — no inserts, no nuts. The
 rail's leaf spring is printed.
@@ -111,3 +102,19 @@ print. Nothing is looked up online, so it works on a bench PC with no internet.
 
 Parametric OpenSCAD and the tooling that builds every plate:
 **{{REPO_URL}}**
+
+---
+
+### This is a remix — the credit chain
+
+Most of this geometry is not mine:
+
+- **@LordAsdi** — the original SMD Component Tape Magazine, CC-BY 4.0
+  https://www.printables.com/model/580643
+- **T. Wirtl (tobi)** — rebuilt it as parametric OpenSCAD, CC-BY-SA 4.0
+- **Bryan Varner** — the Varnerized Edition, the version this started from,
+  CC-BY-SA 4.0 — https://www.printables.com/model/1350841
+- **Robin Reiter** — not a code ancestor, the inspiration for the release lip
+
+Licensed **CC-BY-SA 4.0**, inherited from that chain. Anything you make from
+this carries the same licence and the same credits.

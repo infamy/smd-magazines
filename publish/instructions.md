@@ -3,27 +3,8 @@
 Wall-mounted magazines for SMD parts on cut tape, in two capacities and three
 tape widths, plus the rail they clip to.
 
----
-
-## Credit and licence
-
-This is a derivative work. The geometry that matters — body, lid, slider, rail
-and leaf spring — is not mine.
-
-- **@LordAsdi** — the original SMD Component Tape Magazine, CC-BY 4.0.
-  <https://www.printables.com/model/580643>
-- **T. Wirtl (tobi)** — the parametric OpenSCAD remix that turned those STLs
-  into adjustable code, CC-BY-SA 4.0.
-- **Bryan Varner** — the Varnerized Edition, the version this started from,
-  CC-BY-SA 4.0. <https://www.printables.com/model/1350841>
-- **Robin Reiter** — not a code ancestor, the *inspiration*. His "SMD Magazines
-  G2" video is where the anti-release lip idea comes from.
-
-Added here: the anti-release lip, the two-colour badge, the XL size, the long
-rail, and a label maker.
-
-**Licensed CC-BY-SA 4.0**, inherited from the chain above — not a choice.
-Anything you make from this carries the same licence and the same credits.
+A derivative work — the geometry that matters is not mine. Credits and licence
+are at the end of this document.
 
 ---
 
@@ -73,7 +54,7 @@ Per magazine:
 | | |
 |---|---|
 | 4 × **M2.5 countersunk** screws, thread-forming | into 2.05 mm holes. 6 mm is what I used |
-| 1 × **M3 button head** (ISO 7380), thread-forming | the coil spring's guide, into a 2.5 mm hole |
+| 1 × **M3 × 16 mm button head** (ISO 7380), thread-forming | the coil spring's guide, into a 2.5 mm hole |
 | 1 × compression spring | about 4 mm outside diameter, 20 mm free length, 0.4 mm wire |
 
 The screws thread straight into the plastic — no inserts, no nuts. The M3 head
@@ -121,3 +102,27 @@ part number and quantity.
 The whole thing is parametric OpenSCAD, and the build produces plain core-spec
 3MF — geometry and filament assignment, no slicer profile baked in. Link in the
 model description.
+
+---
+
+## Credit and licence
+
+This is a derivative work. The geometry that matters — body, lid, slider, rail
+and leaf spring — is not mine.
+
+- **@LordAsdi** — the original SMD Component Tape Magazine, CC-BY 4.0.
+  <https://www.printables.com/model/580643>
+- **T. Wirtl (tobi)** — the parametric OpenSCAD remix that turned those STLs
+  into adjustable code, CC-BY-SA 4.0.
+- **Bryan Varner** — the Varnerized Edition, the version this started from,
+  CC-BY-SA 4.0. <https://www.printables.com/model/1350841>
+- **Robin Reiter** — not a code ancestor, the *inspiration*. His "SMD Magazines
+  G2" video is where the anti-release lip idea comes from.
+
+Added here: the anti-release lip, the two-colour badge, the XL size, the long
+rail, and a label maker.
+
+**Licensed CC-BY-SA 4.0**, inherited from the chain above — not a choice.
+Anything you make from this carries the same licence and the same credits.
+
+---
