@@ -471,12 +471,14 @@ const capacityOf = (r, carrier, pitch) =>
 
 const $ = s => document.querySelector(s);
 
-/* Where the printable magazines live. Served from GitHub Pages this is
-   derivable and needs no configuration: user.github.io/repo is served out of
-   github.com/user/repo. Opened as a local file there is nothing to derive
-   from, so PROJECT_URL is the fallback - set it and the local copy links to
-   the same place the hosted one does. */
-const PROJECT_URL = "";
+/* Where the printable magazines live.
+   On a bare user.github.io/repo address this is derivable with no
+   configuration. It is not derivable here: this site is served from a custom
+   domain, and www.meshmeld.com says nothing about which repository is behind
+   it. PROJECT_URL is what covers that, and the local file as well - without it
+   the hosted page silently shows local print/ paths instead of downloads,
+   which is the whole feature missing and nothing visibly broken. */
+const PROJECT_URL = "https://github.com/infamy/smd-magazines";
 const REPO = (function(){
   const m = location.hostname.match(/^([A-Za-z0-9-]+)\.github\.io$/i);
   if(m){

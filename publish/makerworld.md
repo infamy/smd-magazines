@@ -1,7 +1,6 @@
 # MakerWorld listing
 
-Paste-ready. Two placeholders to fill once the repository exists:
-`{{REPO_URL}}` and `{{PAGES_URL}}`.
+Paste-ready.
 
 **Set on the upload form, not in the text:**
 
@@ -92,7 +91,7 @@ Scan a reel barcode with a USB scanner, or paste a code, and it tells you which
 magazine to print for that part and generates a two-colour label card sized to
 the slot.
 
-**{{PAGES_URL}}**
+**https://www.meshmeld.com/smd-magazines/**
 
 DigiKey and Mouser Data Matrix, LCSC/JLCPCB QR, or bare part numbers. It works
 the tape width out of the package, standard-against-XL out of the reel
@@ -102,7 +101,7 @@ print. Nothing is looked up online, so it works on a bench PC with no internet.
 ### Source
 
 Parametric OpenSCAD and the tooling that builds every plate:
-**{{REPO_URL}}**
+**https://github.com/infamy/smd-magazines**
 
 ---
 

@@ -94,15 +94,16 @@ and works out the tape width from the package and standard-against-XL from the
 reel quantity. Nothing is looked up online — the barcode already carries the
 part number and quantity.
 
-**Link in the model description.**
+**https://www.meshmeld.com/smd-magazines/**
 
 ---
 
 ## Source
 
 The whole thing is parametric OpenSCAD, and the build produces plain core-spec
-3MF — geometry and filament assignment, no slicer profile baked in. Link in the
-model description.
+3MF — geometry and filament assignment, no slicer profile baked in.
+
+**https://github.com/infamy/smd-magazines**
 
 ---
 
