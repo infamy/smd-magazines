@@ -24,6 +24,22 @@ What it looks at, per object:
 The first four are faults. The last is reported separately because it is a
 property of the geometry rather than a defect in the file, and the build does
 not currently produce zero of them.
+
+Cross-checked against lib3mf 2.5.0, the 3MF Consortium's reference
+implementation. It reads every file this build produces without complaint, so
+the hand-written XML is spec-valid, and its IsManifoldAndOriented() flags
+exactly the same seven plates this reports as self-touching - the six XL
+magazine bodies and rail-xl-100mm. Two independent implementations agreeing
+is the reason for trusting either.
+
+That is also the answer to "why not just use lib3mf". For writing: what this
+project emits is a fixed, small subset - geometry, base materials, components -
+and the reference library confirms the output is correct, against a build that
+otherwise needs nothing but OpenSCAD and the Python standard library. For
+checking: IsManifoldAndOriented() is one call against the forty lines below,
+which is a real argument for it, but it does not say which edges or where, and
+it would not have caught the weld bug that prompted all this - lib3mf takes
+vertices by index, so the soup-to-indexed-mesh step stays ours either way.
 """
 
 import collections
