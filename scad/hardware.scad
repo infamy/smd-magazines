@@ -23,6 +23,10 @@
  * so the cone angle cannot drift away from the head angle again.
  */
 
+/* Confirmed against the built part: M2.5 x 6mm countersunk, hex drive. The
+ * mouth is head_d + clr = 5.0, which clears a hex-socket countersunk head as
+ * well as the cross-recess one this figure is taken from - both are 90 degree
+ * heads and neither exceeds 5.0 across the top. */
 csk_m2_5_head_d   = 4.7;   // DIN 965 / ISO 7046 dk, max
 csk_m2_5_head_ang = 90;    // included angle of that head
 csk_m2_5_head_clr = 0.3;   // diametral print clearance on the head cone (0.15 radial)

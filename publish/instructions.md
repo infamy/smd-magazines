@@ -53,7 +53,7 @@ Per magazine:
 
 | | |
 |---|---|
-| 4 × **M2.5 countersunk** screws, thread-forming | into 2.05 mm holes. 6 mm is what I used |
+| 4 × **M2.5 × 6 mm countersunk**, hex drive, thread-forming | into 2.05 mm holes |
 | 1 × **M3 × 16 mm button head** (ISO 7380), thread-forming | the coil spring's guide, into a 2.5 mm hole |
 | 1 × compression spring | about 4 mm outside diameter, 20 mm free length, 0.4 mm wire |
 
@@ -74,7 +74,7 @@ whatever screws suit your wall.
    spring instead of the spring wandering. Check it moves freely before the lid
    goes on.
 3. **Badge.** If you printed it as a separate part, it drops into the recess.
-4. **Lid.** Four M2.5 countersunk screws. Thread-forming into bare plastic, so
+4. **Lid.** Four M2.5 × 6 mm countersunk screws. Thread-forming into bare plastic, so
    go gently on the first turn.
 5. **Label.** Print a label card and slide it into the slot on the top edge.
 6. **Rail.** Thread the leaf spring segments into the channel end to end, then

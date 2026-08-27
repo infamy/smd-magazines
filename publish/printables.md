@@ -68,8 +68,8 @@ the folder matching yours. The rails suit either.
 
 ### What you need besides the print
 
-Per magazine: **4 × M2.5 countersunk** screws (into 2.05 mm holes, 6 mm is what
-I used), **1 × M3 × 16 mm button head** (ISO 7380, the coil spring's guide), and a
+Per magazine: **4 × M2.5 × 6 mm countersunk** screws, hex drive (into 2.05 mm
+holes), **1 × M3 × 16 mm button head** (ISO 7380, the coil spring's guide), and a
 **compression spring** about 4 mm outside diameter, 20 mm free length, 0.4 mm
 wire. Everything threads straight into the plastic — no inserts, no nuts. The
 rail's leaf spring is printed.
