@@ -190,14 +190,24 @@ is for someone deciding whether the repository is worth their time rather than
 someone who already has the files and wants to assemble them.
 
 ```bash
-./tools/build.sh --release         # release/, flat asset names
+./tools/build.sh --release         # print/, stl/, and release/
 ./tools/check_3mf.py               # verify every plate before it ships
 python3 tools/make_pdf.py          # publish/SMD-magazines-instructions.pdf
+python3 tools/make_upload.py       # upload/, the zips for the model sites
 ```
 
 `check_3mf.py` is worth running before any upload. A slicer does not refuse a
 bad mesh, it repairs it and carries on, so a file can be wrong for a long time
 without anything saying so.
+
+`make_upload.py` packs what the model sites take: one zip of the sixteen
+plates, one of every part as a separate STL, and the PDF left loose so it can
+go up as its own file. Both sites take the same set. The STLs are rewritten as
+binary on the way in - OpenSCAD emits ASCII, which is four times the size for
+identical geometry, so 110MB becomes 26MB and the zip 6MB. Verified by
+round-tripping all sixty back and comparing against the originals: worst
+coordinate difference 0.015 microns, which is float32 quantisation and nothing
+else. The 3MFs are copied byte for byte, because they are what people print.
 
 `printables.md` and `makerworld.md` are the listing descriptions, paste-ready
 apart from two URL placeholders, each with the licence and remix fields the

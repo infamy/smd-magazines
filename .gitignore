@@ -4,6 +4,7 @@
 /stl/
 /release/
 /print/
+/upload/
 
 # OpenSCAD leaves these beside a failed part
 *.err
