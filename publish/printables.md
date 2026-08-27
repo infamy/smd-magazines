@@ -44,7 +44,8 @@ from Robin Reiter's "SMD Magazines G2" video; the mechanism here is my own — a
 full-depth flap rather than a cantilever.
 
 **A two-colour size badge.** The tape width is moulded into the front on a
-second filament, so a rack of mixed widths reads at a glance. It is a second
+second filament — already assigned in the file, so it loads that way — so a
+rack of mixed widths reads at a glance. It is a second
 *part* of the body object rather than a separate object, so a slicer's Arrange
 cannot slide it out of its recess. Single extruder? Delete the badge part and
 swap filament at layers 2 and 3.

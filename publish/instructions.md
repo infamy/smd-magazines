@@ -34,7 +34,8 @@ Nothing exotic. No supports, no brim except on the long rail.
 
 - **Layer height** whatever suits your nozzle. The first layer must match the
   folder you took the files from.
-- **Two colours** — the badge is on filament 2, so only the size marking changes
+- **Two colours** — the badge comes assigned to filament 2, so it arrives on
+  the second colour with nothing to set up, and only the size marking changes
   colour. On a single extruder, delete the badge part and swap filament at
   layers 2 and 3 instead; that leaves a thin accent line round the whole part,
   which the separate badge avoids.

@@ -72,8 +72,9 @@ No supports. A brim on the 300 mm rail, which needs 325 mm of build height.
 
 The files are STL and plain **core-spec 3MF** — geometry and filament
 assignment, no slicer profile baked in, so your own settings apply. The badge
-is on filament 2; on a single extruder, delete the badge part and swap filament
-at layers 2 and 3 instead.
+comes already assigned to filament 2, so it loads on the second colour with
+nothing to set up; on a single extruder, delete the badge part and swap
+filament at layers 2 and 3 instead.
 
 ### What you need besides the print
 

@@ -85,8 +85,10 @@ it for the 0.4 would gain nothing and would stop 0.4-nozzle caps fitting
 
 Each magazine plate carries three objects and four parts: the badge is a
 second *part* of the body object, not a separate object, so Arrange cannot
-slide it out of its recess. The badge is on **filament 2** so only the size marking changes colour — grey body, black
-badge, no purge line around the part. On a single extruder, delete the badge
+slide it out of its recess. The badge is assigned to **filament 2** in the
+file, so it arrives on the second colour without you setting anything, and
+only the size marking changes colour — grey body, black badge, no purge line
+around the part. On a single extruder, delete the badge
 part and swap filament at layers 2 and 3 instead; that also leaves a thin accent
 line round the whole part, which the separate badge avoids.
 
@@ -164,7 +166,7 @@ a dropdown rather than a measurement.
 the end of the card reversed out of a band of the second filament, turned 90°;
 the value gets the rest. Output is a plain core-spec 3MF with two objects and
 two base materials, the same shape `make_3mf.py` writes, so it imports beside
-the magazine parts — assign the two to AMS slots. Labels queue up as you scan,
+the magazine parts, with the lettering already on filament 2. Labels queue up as you scan,
 and **Save plate** writes them all as one 3MF laid out for your bed.
 
 Release assets are a flat list, so the nozzle folder that separates the plates
