@@ -121,7 +121,7 @@ def main():
         if not re.fullmatch(r"#[0-9A-Fa-f]{6}", c):
             ap.error(f"colour {c!r} is not #RRGGBB")
 
-    res, items, next_id = [], [], 2
+    res, items, settings, next_id = [], [], [], 2
     res.append('<basematerials id="1">' + "".join(
         f'<base name="filament{i+1}" displaycolor="{c}FF"/>'
         for i, c in enumerate(colours)) + '</basematerials>')
@@ -143,7 +143,7 @@ def main():
             total_dropped += dropped
             res.append(f'<object id="{next_id}" type="model" pid="1" pindex="{idx-1}">'
                        f'{mesh_xml(verts, tris)}</object>')
-            parts.append((next_id, Path(stl).stem, len(tris), dropped))
+            parts.append((next_id, Path(stl).stem, len(tris), dropped, idx))
             next_id += 1
 
         if len(parts) == 1:
@@ -153,7 +153,8 @@ def main():
                 f'<component objectid="{p[0]}"/>' for p in parts) + '</components></object>')
             items.append(next_id)
             next_id += 1
-        for oid, name, nt, drop in parts:
+        settings.append((items[-1], parts))
+        for oid, name, nt, drop, _fil in parts:
             note = f"  ({drop} degenerate dropped)" if drop else ""
             print(f"    {name:<14} filament {idx if len(parts)==1 else ''}"
                   f"{'':<2}{nt:6d} tris{note}")
@@ -165,6 +166,31 @@ def main():
              '<build>' + "".join(
                  f'<item objectid="{i}" transform="1 0 0 0 1 0 0 0 1 0 0 0"/>'
                  for i in items) + '</build></model>')
+
+    """Bambu Studio and Orca ignore the core spec's basematerials and take
+    filament assignment from their own Metadata/model_settings.config. Without
+    it every part arrives on filament 1 and the badge has to be reassigned by
+    hand on every import - by anyone who downloads this, not just by us.
+
+    The schema below is copied from a Bambu export of this same plate, not
+    guessed: <object> is the build item's id, <part> is each mesh inside it.
+    Other slicers ignore unknown files under Metadata/, so the archive stays a
+    plain core-spec 3MF that happens to carry a hint, and the build still needs
+    nothing but OpenSCAD and the standard library."""
+    cfg = ['<?xml version="1.0" encoding="UTF-8"?>', "<config>"]
+    for item_id, parts in settings:
+        cfg.append(f'  <object id="{item_id}">')
+        cfg.append(f'    <metadata key="name" value="{parts[0][1]}"/>')
+        for oid, name, _nt, _drop, fil in parts:
+            cfg.append(f'    <part id="{oid}" subtype="normal_part">')
+            cfg.append(f'      <metadata key="name" value="{name}"/>')
+            cfg.append('      <metadata key="matrix" '
+                       'value="1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"/>')
+            cfg.append(f'      <metadata key="extruder" value="{fil}"/>')
+            cfg.append("    </part>")
+        cfg.append("  </object>")
+    cfg.append("</config>")
+    model_settings = "\n".join(cfg)
 
     Path(a.out).parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(a.out, "w", zipfile.ZIP_DEFLATED) as z:
@@ -181,6 +207,7 @@ def main():
                    'Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/>'
                    '</Relationships>')
         z.writestr("3D/3dmodel.model", model)
+        z.writestr("Metadata/model_settings.config", model_settings)
     if total_dropped:
         print(f"    {total_dropped} degenerate triangle(s) dropped in total")
     print(f"    -> {a.out}  ({len(items)} build item(s), {len(colours)} filament(s))")
