@@ -110,23 +110,32 @@ rail() {
     local out="$STL/rails/$name"
     mkdir -p "$out" "$PRINT/rails"
     echo "==> $name  (either nozzle)"
-    for p in rail cap spring; do
+    # One STL per spring segment, so each is its own object in the 3MF.
+    # Same ceil(rail_len / spring_max_len) as rail_plate.scad, at 100mm.
+    local nseg=$(( (len + 99) / 100 ))
+    local parts="rail cap" springs="" objs="" i
+    for (( i = 0; i < nseg; i++ )); do parts="$parts spring$i"; done
+    rm -f "$out"/*.stl
+    for p in $parts; do
         printf '    %-7s ' "$p"
-        rm -f "$out/$p.stl"
-        if ! "$OPENSCAD" -D "rail_grow_x=$grow" -D "PART=\"$p\"" -D "rail_len=$len" \
-                -o "$out/$p.stl" "$SCAD/rail_plate.scad" 2>"$out/$p.err"; then
+        local part=$p seg=-1
+        case $p in spring*) part=spring; seg=${p#spring} ;; esac
+        if ! "$OPENSCAD" -D "rail_grow_x=$grow" -D "PART=\"$part\"" -D "SEG=$seg" \
+                -D "rail_len=$len" -o "$out/$p.stl" "$SCAD/rail_plate.scad" 2>"$out/$p.err"; then
             echo "FAILED"; sed 's/^/      /' "$out/$p.err"; exit 1
         fi
         [ -s "$out/$p.stl" ] || { echo "FAILED - no output"; exit 1; }
         rm -f "$out/$p.err"
         echo "ok"
+        objs="$objs --object $out/$p.stl@1"
+        case $p in spring*) springs="$springs $out/$p.stl" ;; esac
     done
     python3 "$HERE/place_stl.py" --at "5,5"   "$out/rail.stl"
     python3 "$HERE/place_stl.py" --at "5,60"  "$out/cap.stl"
-    python3 "$HERE/place_stl.py" --at "115,5" "$out/spring.stl"
+    # One call, so every segment gets segment 0's offset and keeps its gap.
+    python3 "$HERE/place_stl.py" --at "115,5" $springs
     python3 "$HERE/make_3mf.py" "$PRINT/rails/$name.3mf" \
-        --colours "$BODY_COLOUR" \
-        --object "$out/rail.stl@1" --object "$out/cap.stl@1" --object "$out/spring.stl@1"
+        --colours "$BODY_COLOUR" $objs
 }
 
 rail 100 0    ""

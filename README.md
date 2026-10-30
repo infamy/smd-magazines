@@ -122,7 +122,7 @@ rail gets four instead of two.
 **The leaf spring ships in segments.** Past about 100mm it is a 0.8mm ribbon
 that curls off the bed and is awkward to thread into the channel, so the plate
 divides the rail length into equal pieces no longer than `spring_max_len`
-(100mm) and lays them side by side: a 300mm rail gets **3 × 100mm**. They butt
+(100mm) and lays them end to end on the plate: a 300mm rail gets **3 × 100mm**. They butt
 end to end in the channel and are retained by the rail base and the cap, exactly
 as one long leaf would be. Each segment keeps 7mm of solid land at both ends —
 the previous single 300mm leaf had a lightening slot landing exactly on its free
